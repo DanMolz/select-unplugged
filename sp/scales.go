@@ -1,9 +1,9 @@
 package sp
 
 type Scales struct {
-	DcVolts     int
-	DcCurrent   int
-	Temperature int
-	AcVolts     int
-	AcCurrent   int
+	DcVolts     float64
+	DcCurrent   float64
+	Temperature float64
+	AcVolts     float64
+	AcCurrent   float64
 }

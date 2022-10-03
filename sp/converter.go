@@ -12,23 +12,23 @@ const magicTemperatureDivisor = magic
 const magicRatioDivisor = 25600.0
 
 func ConvertUnsignedAcW(raw int, scales Scales) float64 {
-	return float64(raw*scales.AcVolts*scales.AcCurrent) / magicAcWUnsignedDivisor
+	return float64(raw) * scales.AcVolts * scales.AcCurrent / magicAcWUnsignedDivisor
 }
 
 func ConvertAcWh(raw int, scales Scales) float64 {
-	return float64(raw*magicWhMultiplier*scales.AcVolts*scales.AcCurrent) / magicWhDivisor
+	return float64(raw) * magicWhMultiplier * scales.AcVolts * scales.AcCurrent / magicWhDivisor
 }
 
 func ConvertDcV(raw int, scales Scales) float64 {
-	return float64(raw*scales.DcVolts) / magicDcVDivisor
+	return float64(raw) * scales.DcVolts / magicDcVDivisor
 }
 
 func ConvertDcW(raw int, scales Scales) float64 {
-	return float64(raw*scales.DcVolts*scales.DcCurrent) / magicDcWDivisor
+	return float64(raw) * scales.DcVolts * scales.DcCurrent / magicDcWDivisor
 }
 
 func ConvertTemperature(raw int, scales Scales) float64 {
-	return float64(raw*scales.Temperature) / magicTemperatureDivisor
+	return float64(raw) * scales.Temperature / magicTemperatureDivisor
 }
 
 func ConvertRatio(raw int, scales Scales) float64 {
@@ -36,7 +36,7 @@ func ConvertRatio(raw int, scales Scales) float64 {
 }
 
 func ConvertDcWh(raw int, scales Scales) float64 {
-	return float64(raw*magicWhMultiplier*scales.DcVolts*scales.DcCurrent) / magicWhDivisor
+	return float64(raw) * magicWhMultiplier * scales.DcVolts * scales.DcCurrent / magicWhDivisor
 }
 
 func ConvertShunt(raw int, scales Scales) string {
