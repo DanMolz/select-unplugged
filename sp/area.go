@@ -28,3 +28,7 @@ func (area Area) Message() Message {
 		binary.LittleEndian.AppendUint32(Message{}, uint32(area.address))...,
 	)
 }
+
+func (area Area) Bytes() int {
+	return int(area.words) * 2
+}

@@ -6,6 +6,7 @@ main() {
 
 	while : ; do
 		go test ./... || true
+		date
 		read -r _ 
 	done < <(fswatch -o .)
 }
