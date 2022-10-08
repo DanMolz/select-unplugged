@@ -5,7 +5,7 @@ main() {
 	cd "$(dirname "$0")/.."
 
 	while : ; do
-		go test ./... || true
+		go test -cover ./... || true
 		date
 		read -r _ 
 	done < <(fswatch -o .)

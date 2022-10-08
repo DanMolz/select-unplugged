@@ -1,0 +1,11 @@
+#!/bin/bash
+
+main() {
+	set -euo pipefail
+	cd "$(dirname "$0")/.."
+
+	go test -coverprofile coverage.out ./...
+	go tool cover -html=coverage.out
+}
+
+main "$@"
