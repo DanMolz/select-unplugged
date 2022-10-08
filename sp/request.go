@@ -21,18 +21,18 @@ func CreateQueryRequest(area Area) Request {
 	return Request(message)
 }
 
-/*func CreateWriteRequest(memory Memory) Request {
+func CreateWriteRequest(memory Memory) Request {
 
 	message := []byte("W")
 	message = append(
 		message,
-		[]byte{uint8(len(memory.data))},
+		uint8(len(memory.data)/2-1),
 	)
 
-	message = append(message, memory.area.Message()...)
+	message = append(message, memory.address.Message()...)
+	message = binary.LittleEndian.AppendUint16(message, Crc(message))
 	message = append(message, memory.data...)
 	message = binary.LittleEndian.AppendUint16(message, Crc(message))
 
 	return Request(message)
 }
-*/

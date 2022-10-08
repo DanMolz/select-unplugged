@@ -6,10 +6,8 @@ import (
 	"fmt"
 )
 
-type AreaAddress uint32
-
 type Area struct {
-	address AreaAddress
+	address Address
 	words   Words
 }
 

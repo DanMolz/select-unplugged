@@ -7,7 +7,7 @@ import (
 
 func TestAreaString(t *testing.T) {
 	var cases = []struct {
-		address  AreaAddress
+		address  Address
 		words    Words
 		expected string
 	}{
@@ -24,7 +24,7 @@ func TestAreaString(t *testing.T) {
 
 func TestAreaMessage(t *testing.T) {
 	var cases = []struct {
-		address  AreaAddress
+		address  Address
 		words    Words
 		expected Message
 	}{
