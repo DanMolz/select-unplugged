@@ -1,7 +1,6 @@
 package sp
 
 type Variable interface {
-	Memory() Memory
 }
 
 type ConverterFloat64 func(int, Scales) float64
@@ -12,9 +11,7 @@ type VariableFloat64 struct {
 	converter ConverterFloat64
 }
 
-func (v VariableFloat64) Memory() Memory { return v.memory }
-
-func newVariableFloat64(
+func NewVariableFloat64(
 	address AreaAddress,
 	words AreaWords,
 	converter ConverterFloat64,
@@ -50,8 +47,6 @@ func newVariableString(
 		converter: converter,
 	}
 }
-
-func (v VariableString) Memory() Memory { return v.memory }
 
 // TODO: make sure we have the following working:
 //    uint           -> string
