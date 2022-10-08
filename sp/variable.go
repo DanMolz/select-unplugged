@@ -11,6 +11,7 @@ type VariableFloat64 struct {
 	converter ConverterFloat64
 }
 
+/*
 func NewVariableFloat64(
 	address AreaAddress,
 	words AreaWords,
@@ -25,13 +26,14 @@ func NewVariableFloat64(
 		},
 		converter: converter,
 	}
-}
+}*/
 
 type VariableString struct {
 	memory    Memory
 	converter ConverterString
 }
 
+/*
 func newVariableString(
 	address AreaAddress,
 	words AreaWords,
@@ -46,7 +48,7 @@ func newVariableString(
 		},
 		converter: converter,
 	}
-}
+}*/
 
 // TODO: make sure we have the following working:
 //    uint           -> string

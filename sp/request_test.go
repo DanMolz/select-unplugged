@@ -22,3 +22,26 @@ func TestCreateQueryRequest(t *testing.T) {
 		t.Errorf("CreateQueryRequest(%v) => %v, actual %v", tt.area, tt.expected, actual)
 	}
 }
+
+/*
+func TestCreateWriteRequest(t *testing.T) {
+	for _, tt := range []struct {
+		memory   Memory
+		expected Request
+	}{
+		{
+			Memory{
+				area: Area{address: 0x001f0000},
+				data: []byte("\xb6\xd1\x36\x04\x08\x0c\x87\xce\x81\xc1\x82\xc6\x6f\xa5\xfb\x35"),
+			},
+			Request("W\x07\x00\x00\x1f\x005z\xb6\xd16\x04\x08\x0c\x87\xce\x81\xc1\x82\xc6o\xa5\xfb5w\xaa"),
+		},
+	} {
+		actual := CreateWriteRequest(tt.memory)
+		if bytes.Equal(actual, tt.expected) {
+			continue
+		}
+		t.Errorf("CreateWriteRequest(%v) => %v, actual %v", tt.memory, tt.expected, actual)
+	}
+}
+*/

@@ -8,7 +8,7 @@ import (
 func TestAreaString(t *testing.T) {
 	var cases = []struct {
 		address  AreaAddress
-		words    AreaWords
+		words    Words
 		expected string
 	}{
 		{0, 0, "Area(0x00000000, 0)"},
@@ -25,7 +25,7 @@ func TestAreaString(t *testing.T) {
 func TestAreaMessage(t *testing.T) {
 	var cases = []struct {
 		address  AreaAddress
-		words    AreaWords
+		words    Words
 		expected Message
 	}{
 		{0, 0, []byte("\x00\x00\x00\x00\x00")},

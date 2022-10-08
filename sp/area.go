@@ -7,11 +7,10 @@ import (
 )
 
 type AreaAddress uint32
-type AreaWords uint8
 
 type Area struct {
 	address AreaAddress
-	words   AreaWords
+	words   Words
 }
 
 func (area Area) String() string {
