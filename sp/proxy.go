@@ -8,15 +8,17 @@ import (
 
 type Proxy struct{}
 
-func (p Proxy) Start() {
-	spConnection := &Connection{}
-	spConnection.Start()
-	address := "127.0.0.1:7528"
+func (p Proxy) Start(address string) {
+	log.Printf("Listening on %s", address)
 	l, err := net.Listen("tcp4", address)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer l.Close()
+
+	log.Printf("Connecting to SP Pro")
+	spConnection := &Connection{}
+	spConnection.Start()
 
 	for {
 		clientConnection, err := l.Accept()
