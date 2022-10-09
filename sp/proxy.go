@@ -19,6 +19,7 @@ func (p Proxy) Start(address string) {
 	log.Printf("Connecting to SP Pro")
 	spConnection := &Connection{}
 	spConnection.Start()
+	protocol := NewProtocol(spConnection)
 
 	for {
 		clientConnection, err := l.Accept()
@@ -27,11 +28,11 @@ func (p Proxy) Start(address string) {
 			return
 		}
 		log.Print("Accepted connection")
-		go p.handleConnection(clientConnection, spConnection)
+		go p.handleConnection(clientConnection, protocol)
 	}
 }
 
-func (p Proxy) handleConnection(clientConnection net.Conn, spConnection *Connection) {
+func (p Proxy) handleConnection(clientConnection net.Conn, protocol *Protocol) {
 	log.Printf("Serving %s\n", clientConnection.RemoteAddr().String())
 	for {
 		read := make([]byte, 1024)
@@ -46,13 +47,10 @@ func (p Proxy) handleConnection(clientConnection net.Conn, spConnection *Connect
 			clientConnection.RemoteAddr().String(),
 			stringRead,
 		)
-		if stringRead == "STOP" {
-			break
-		}
 
-		result := spConnection.Send(read)
+		result := protocol.Send(read)
 
 		clientConnection.Write(result)
 	}
-	clientConnection.Close()
+	// TODO: handle clients disconnecting... but how? clientConnection.Close()
 }
