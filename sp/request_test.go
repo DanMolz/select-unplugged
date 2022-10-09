@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestResponseExpectedLength(t *testing.T) {
+func TestRequestResponseLength(t *testing.T) {
 	for _, tt := range []struct {
 		request  Request
 		expected int
@@ -19,10 +19,14 @@ func TestResponseExpectedLength(t *testing.T) {
 			26,
 		},
 	} {
-		actual := NewResponse(tt.request).ExpectedLength()
+		actual := tt.request.ResponseLength()
 		if actual == tt.expected {
 			continue
 		}
 		t.Errorf("Expected %v, actual %v", tt.expected, actual)
 	}
+}
+
+func TestRequestType(t *testing.T) {
+	t.Fatal("TODO: request should know its type (enum?)")
 }

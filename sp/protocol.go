@@ -6,11 +6,11 @@ import (
 
 // Protocol sends requests and receives responses via the connection.
 type Protocol struct {
-	connection *Connection
+	connection Connection
 	mutex      sync.Mutex
 }
 
-func NewProtocol(connection *Connection) *Protocol {
+func NewProtocol(connection Connection) *Protocol {
 	protocol := Protocol{
 		connection: connection,
 	}
@@ -20,6 +20,6 @@ func NewProtocol(connection *Connection) *Protocol {
 func (protocol *Protocol) Send(request Request) Message {
 	protocol.mutex.Lock()
 	defer protocol.mutex.Unlock()
-	protocol.connection.write(request)
-	return protocol.connection.read(1024) // TODO: get read length from request
+	protocol.connection.Write(request)
+	return protocol.connection.Read(1024) // TODO: get read length from request
 }

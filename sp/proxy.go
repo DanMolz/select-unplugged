@@ -17,9 +17,9 @@ func (p Proxy) Start(address string) {
 	defer l.Close()
 
 	log.Printf("Connecting to SP Pro")
-	spConnection := &Connection{}
+	spConnection := ConnectionTcp{}
 	spConnection.Start()
-	protocol := NewProtocol(spConnection)
+	protocol := NewProtocol(&spConnection)
 
 	for {
 		clientConnection, err := l.Accept()
