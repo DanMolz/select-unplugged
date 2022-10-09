@@ -9,7 +9,7 @@ import (
 type Proxy struct{}
 
 func (p Proxy) Start() {
-	spConnection := Connection{}
+	spConnection := &Connection{}
 	spConnection.Start()
 	address := "127.0.0.1:7528"
 	l, err := net.Listen("tcp4", address)
@@ -29,7 +29,7 @@ func (p Proxy) Start() {
 	}
 }
 
-func (p Proxy) handleConnection(clientConnection net.Conn, spConnection Connection) {
+func (p Proxy) handleConnection(clientConnection net.Conn, spConnection *Connection) {
 	log.Printf("Serving %s\n", clientConnection.RemoteAddr().String())
 	for {
 		read := make([]byte, 1024)
@@ -48,9 +48,8 @@ func (p Proxy) handleConnection(clientConnection net.Conn, spConnection Connecti
 			break
 		}
 
-		spConnection.Write(read)
+		result := spConnection.Send(read)
 
-		result := spConnection.Read()
 		clientConnection.Write(result)
 	}
 	clientConnection.Close()
