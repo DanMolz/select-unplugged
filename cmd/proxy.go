@@ -1,8 +1,7 @@
 package cmd
 
 import (
-	"fmt"
-
+	"github.com/neerolyte/select-unplugged/sp"
 	"github.com/spf13/cobra"
 )
 
@@ -12,7 +11,8 @@ var proxyCmd = &cobra.Command{
 	Short: "Share SP Pro serial via a proxy",
 	Long:  `Share SP Pro serial via a proxy`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("proxy called")
+		proxy := new(sp.Proxy)
+		proxy.Start()
 	},
 }
 
