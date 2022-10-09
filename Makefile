@@ -1,10 +1,18 @@
 .DEFAULT_GOAL := build
+SHELL := /bin/bash
 
 lint:
 	go vet ./...
 
 test: lint
-	go test ./...
+	go test -cover ./...
+
+watch:
+	while : ; do \
+		make test; \
+		date; \
+		read -r _; \
+	done < <(fswatch -o .)
 
 build: test
 	mkdir -p bin
