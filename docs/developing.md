@@ -1,8 +1,14 @@
 # Run tests
 
 ```
-go test ./...
+make test
 ```
+
+# Mocks
+
+Using https://github.com/vektra/mockery .
+
+Generate a mock with `( cd sp && mockery --name=$interface )`
 
 # Compiling for a pi
 
