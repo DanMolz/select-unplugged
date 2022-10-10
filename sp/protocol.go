@@ -17,9 +17,13 @@ func NewProtocol(connection Connection) *Protocol {
 	return &protocol
 }
 
-func (protocol *Protocol) Send(request Request) Message {
+func (protocol *Protocol) Send(request Request) (Message, error) {
+	length, err := request.ResponseLength()
+	if err != nil {
+		return nil, err
+	}
 	protocol.mutex.Lock()
 	defer protocol.mutex.Unlock()
 	protocol.connection.Write(request)
-	return protocol.connection.Read(1024) // TODO: get read length from request
+	return protocol.connection.Read(*length), nil
 }

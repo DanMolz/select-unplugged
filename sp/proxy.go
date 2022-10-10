@@ -1,9 +1,10 @@
 package sp
 
 import (
-	"log"
 	"net"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Proxy struct{}
@@ -48,7 +49,10 @@ func (p Proxy) handleConnection(clientConnection net.Conn, protocol *Protocol) {
 			stringRead,
 		)
 
-		result := protocol.Send(read)
+		result, err := protocol.Send(read)
+		if err != nil {
+			log.Fatalf("TODO: %s", err.Error())
+		}
 
 		clientConnection.Write(result)
 	}
