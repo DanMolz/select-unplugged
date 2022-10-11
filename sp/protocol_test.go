@@ -3,13 +3,12 @@ package sp
 import (
 	"testing"
 
-	"github.com/neerolyte/select-unplugged/sp/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestProtocolSend(t *testing.T) {
-	connection := mocks.NewConnection(t)
+	connection := NewMockConnection(t)
 
 	req := NewRequestQuery(Area{
 		address: 0x01,
