@@ -1,8 +1,12 @@
+name: CI
+
 on: [push]
 
-steps:
-  - uses: actions/checkout@v3
-  - uses: actions/setup-go@v3
-    with:
-      go-version: '^1.13.1' # The Go version to download (if necessary) and use.
-  - run: make
+jobs:
+  build:
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: '^1.13.1' # The Go version to download (if necessary) and use.
+      - run: make
