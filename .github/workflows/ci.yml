@@ -14,5 +14,9 @@ jobs:
           go-version-file: 'path/to/go.mod'
       - name: Test and build
         run: make
-        path: |
-          bin
+      - name: Archive binaries
+        uses: actions/upload-artifact@v3
+        with:
+          name: bin
+          path: |
+            bin
