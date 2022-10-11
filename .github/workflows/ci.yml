@@ -6,8 +6,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Setup Go
+        uses: actions/setup-go@v3
         with:
-          go-version: '^1.13.1' # The Go version to download (if necessary) and use.
-      - run: make
+          go-version-file: 'path/to/go.mod'
+      - name: Test and build
+        run: make
