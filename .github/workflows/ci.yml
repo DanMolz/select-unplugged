@@ -14,3 +14,5 @@ jobs:
           go-version-file: 'path/to/go.mod'
       - name: Test and build
         run: make
+        path: |
+          bin
