@@ -10,29 +10,73 @@ type Connection struct {
 }
 
 // Close provides a mock function with given fields:
-func (_m *Connection) Close() {
-	_m.Called()
-}
+func (_m *Connection) Close() error {
+	ret := _m.Called()
 
-// Read provides a mock function with given fields: length
-func (_m *Connection) Read(length int) []byte {
-	ret := _m.Called(length)
-
-	var r0 []byte
-	if rf, ok := ret.Get(0).(func(int) []byte); ok {
-		r0 = rf(length)
+	var r0 error
+	if rf, ok := ret.Get(0).(func() error); ok {
+		r0 = rf()
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]byte)
-		}
+		r0 = ret.Error(0)
 	}
 
 	return r0
 }
 
+// Open provides a mock function with given fields:
+func (_m *Connection) Open() error {
+	ret := _m.Called()
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func() error); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// Read provides a mock function with given fields: buf
+func (_m *Connection) Read(buf *[]byte) (int, error) {
+	ret := _m.Called(buf)
+
+	var r0 int
+	if rf, ok := ret.Get(0).(func(*[]byte) int); ok {
+		r0 = rf(buf)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*[]byte) error); ok {
+		r1 = rf(buf)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Write provides a mock function with given fields: data
-func (_m *Connection) Write(data []byte) {
-	_m.Called(data)
+func (_m *Connection) Write(data []byte) (int, error) {
+	ret := _m.Called(data)
+
+	var r0 int
+	if rf, ok := ret.Get(0).(func([]byte) int); ok {
+		r0 = rf(data)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func([]byte) error); ok {
+		r1 = rf(data)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 type mockConstructorTestingTNewConnection interface {

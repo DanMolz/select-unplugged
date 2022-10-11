@@ -5,6 +5,7 @@ import (
 
 	"github.com/neerolyte/select-unplugged/sp/mocks"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestProtocolSend(t *testing.T) {
@@ -14,8 +15,12 @@ func TestProtocolSend(t *testing.T) {
 		address: 0x01,
 		words:   1,
 	})
-	connection.On("Write", []byte(req)).Return()
-	connection.On("Read", 14).Return([]byte("some-response"))
+	connection.On("Write", []byte(req)).Return(len(req), nil)
+	buf := make([]byte, 14)
+	connection.On("Read", &buf).Return(14, nil).Run(func(args mock.Arguments) {
+		arg := args.Get(0).(*[]byte)
+		*arg = []byte(Message("some-response"))
+	})
 
 	protocol := NewProtocol(connection)
 	res, err := protocol.Send(req)
