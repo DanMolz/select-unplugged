@@ -14,9 +14,9 @@ jobs:
           go-version: '^1.13.1' 
       - name: Test and build
         run: make
-      - name: Upload linux-arm
+      - name: Archive binaries
         uses: actions/upload-artifact@v3
         with:
-          name: bin/select-unplugged-linux-arm
+          name: bin
           path: |
-            bin/select-unplugged-linux-arm
+            bin
