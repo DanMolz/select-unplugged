@@ -11,7 +11,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v3
         with:
-          go-version: '^1.13.1' 
+          go-version: '^1.13.1'
       - name: Test and build
         run: make
       - name: Archive binaries
