@@ -2,7 +2,6 @@ package sp
 
 import (
 	"net"
-	"strings"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -42,11 +41,10 @@ func (p Proxy) handleConnection(clientConnection net.Conn, protocol *Protocol) {
 			log.Fatal(err)
 		}
 
-		stringRead := strings.TrimSpace(string(read))
 		log.Printf(
 			"Read from %s: %s",
 			clientConnection.RemoteAddr().String(),
-			stringRead,
+			read,
 		)
 
 		result, err := protocol.Send(read)
@@ -54,6 +52,11 @@ func (p Proxy) handleConnection(clientConnection net.Conn, protocol *Protocol) {
 			log.Fatalf("TODO: %s", err.Error())
 		}
 
+		log.Printf(
+			"Write to %s: %s",
+			clientConnection.RemoteAddr().String(),
+			result,
+		)
 		clientConnection.Write(result)
 	}
 	// TODO: handle clients disconnecting... but how? clientConnection.Close()
