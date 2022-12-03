@@ -11,7 +11,7 @@ type ConnectionSerial struct {
 var _ Connection = (*ConnectionSerial)(nil)
 
 func (c *ConnectionSerial) Open() error {
-	config := &serial.Config{Name: "/dev/ttyUSB0", Baud: 57600}
+	config := &serial.Config{Name: "/dev/ttyUSB1", Baud: 57600}
 	serial, err := serial.OpenPort(config)
 	if err != nil {
 		return err

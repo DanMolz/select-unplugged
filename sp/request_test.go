@@ -7,6 +7,29 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestCalculateRequestLength(t *testing.T) {
+	i := func(i int) *int { return &i }
+	for _, tt := range []struct {
+		message Message
+		length  *int
+		err     error
+	}{
+		{Message("Q"), i(8), nil},
+		{Message("QABCDEFG"), i(8), nil},
+		{Message("W\x00"), i(12), nil},
+		{Message("W\xff"), i(522), nil},
+		{Message("W"), nil, errors.New("Need more bytes to calculate length")},
+		{Message(""), nil, errors.New("Need a byte to calculate length")},
+		{Message("\x01"), nil, errors.New("Unknown message type")},
+	} {
+		length, err := CalculateRequestLength(tt.message)
+		if tt.length != nil {
+			assert.Equal(t, *tt.length, *length)
+		}
+		assert.Equal(t, tt.err, err)
+	}
+}
+
 func TestRequestResponseLength(t *testing.T) {
 	i := func(i int) *int { return &i }
 	for _, tt := range []struct {

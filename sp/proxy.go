@@ -41,23 +41,39 @@ func (p Proxy) handleConnection(clientConnection net.Conn, protocol *Protocol) {
 			log.Fatal(err)
 		}
 
+		request, err := extractRequest(read)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		log.Printf(
-			"Read from %s: %s",
+			"Read from %s: %s (%d)",
 			clientConnection.RemoteAddr().String(),
-			read,
+			request,
+			len(request),
 		)
 
-		result, err := protocol.Send(read)
+		response, err := protocol.Send(request)
 		if err != nil {
 			log.Fatalf("TODO: %s", err.Error())
 		}
 
 		log.Printf(
-			"Write to %s: %s",
+			"Write to %s: %s (%d)",
 			clientConnection.RemoteAddr().String(),
-			result,
+			response,
+			len(response),
 		)
-		clientConnection.Write(result)
+		clientConnection.Write(response)
 	}
 	// TODO: handle clients disconnecting... but how? clientConnection.Close()
+}
+
+func extractRequest(read []byte) (Request, error) {
+	length, err := CalculateRequestLength(read)
+	if err != nil {
+		return nil, err
+	}
+
+	return Request(read[0:*length]), nil
 }

@@ -24,8 +24,16 @@ func (protocol *Protocol) Send(request Request) (Message, error) {
 	}
 	protocol.mutex.Lock()
 	defer protocol.mutex.Unlock()
-	protocol.connection.Write(request)
-	buf := make([]byte, *length)
-	_, err = protocol.connection.Read(&buf)
-	return buf, err
+	protocol.connection.Write([]byte(request))
+	data := make([]byte, 0)
+	for len(data) < *length && err == nil {
+		wantedLength := *length - len(data)
+		buf := make([]byte, wantedLength)
+		partlength, err := protocol.connection.Read(&buf)
+		if err != nil {
+			return nil, err
+		}
+		data = append(data, buf[:partlength]...)
+	}
+	return data, err
 }
