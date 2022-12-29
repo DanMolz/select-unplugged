@@ -33,17 +33,21 @@ func (p Proxy) Start(address string) {
 }
 
 func (p Proxy) handleConnection(clientConnection net.Conn, protocol *Protocol) {
-	log.Printf("Serving %s\n", clientConnection.RemoteAddr().String())
+	log.Printf("Serving %s", clientConnection.RemoteAddr().String())
 	for {
 		read := make([]byte, 1024)
 		_, err := clientConnection.Read(read)
 		if err != nil {
-			log.Fatal(err)
+			if err.Error() == "EOF" {
+				log.Printf("Client disconnected %s", clientConnection.RemoteAddr().String())
+				return
+			}
+			log.Fatalf("TODO: Read from client connection failed: %s", err.Error())
 		}
 
 		request, err := extractRequest(read)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("Failed to extract request: %s", err.Error())
 		}
 
 		log.Printf(
