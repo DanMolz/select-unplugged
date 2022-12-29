@@ -39,7 +39,7 @@ func TestRequestResponseLength(t *testing.T) {
 	}{
 		{NewRequestQuery(Area{0xa000, 0}), i(12), nil},
 		{NewRequestQuery(Area{0xa000, 0xff}), i(522), nil},
-		{Request("Z"), nil, errors.New("Unknown request type 'Z'")},
+		{Request("Z"), nil, errors.New("Unknown message type 'Z'")},
 		{
 			NewRequestWrite(Memory{
 				address: 0x01f,
@@ -60,15 +60,15 @@ func TestRequestType(t *testing.T) {
 	write := Write
 	for _, tt := range []struct {
 		request     Request
-		requestType *RequestType
+		messageType *MessageType
 		err         error
 	}{
 		{Request("Q"), &query, nil},
 		{Request("W"), &write, nil},
-		{Request("Z"), nil, errors.New("Unknown request type 'Z'")},
+		{Request("Z"), nil, errors.New("Unknown message type 'Z'")},
 	} {
 		requestType, err := tt.request.Type()
-		assert.Equal(t, tt.requestType, requestType)
+		assert.Equal(t, tt.messageType, requestType)
 		assert.Equal(t, tt.err, err)
 	}
 }

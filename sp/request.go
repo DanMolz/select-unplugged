@@ -7,11 +7,6 @@ import (
 	"fmt"
 )
 
-type RequestType string
-
-const Query RequestType = "Q"
-const Write RequestType = "W"
-
 type Request Message
 
 func NewRequestQuery(area Area) Request {
@@ -43,7 +38,7 @@ func CalculateRequestLength(partial Message) (*int, error) {
 	if len(partial) < 1 {
 		return nil, errors.New("Need a byte to calculate length")
 	}
-	rt := RequestType(partial[0])
+	rt := MessageType(partial[0])
 	length := 8
 	if rt == Query {
 		return i(8), nil
@@ -51,11 +46,11 @@ func CalculateRequestLength(partial Message) (*int, error) {
 	if rt != Write {
 		return nil, errors.New("Unknown message type")
 	}
-	if len(partial) < 2 {
-		return nil, errors.New("Need more bytes to calculate length")
+	words, err := partial.Words()
+	if err != nil {
+		return nil, err
 	}
-	words := int(partial[1])
-	return i(length + (words+1)*2 + 2), nil
+	return i(length + *words*2 + 2), nil
 }
 
 func (r Request) ResponseLength() (*int, error) {
@@ -80,10 +75,6 @@ func (r Request) DataLength() int {
 	return (int(r[1]) + 1) * 2
 }
 
-func (r Request) Type() (*RequestType, error) {
-	rt := RequestType(r[0])
-	if rt == Query || rt == Write {
-		return &rt, nil
-	}
-	return nil, errors.New(fmt.Sprintf("Unknown request type '%s'", rt))
+func (r Request) Type() (*MessageType, error) {
+	return Message(r).Type()
 }
