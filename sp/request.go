@@ -64,13 +64,20 @@ func (r Request) ResponseLength() (*int, error) {
 		return nil, err
 	}
 	requestLength := len(r)
-	dataLength := (int(r[1]) + 1) * 2
+	dataLength := r.DataLength()
+	if err != nil {
+		return nil, err
+	}
 	crcLength := 2
 	if *requestType == Write {
 		return &requestLength, nil
 	}
 	length := requestLength + dataLength + crcLength
 	return &length, nil
+}
+
+func (r Request) DataLength() int {
+	return (int(r[1]) + 1) * 2
 }
 
 func (r Request) Type() (*RequestType, error) {

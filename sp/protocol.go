@@ -17,7 +17,7 @@ func NewProtocol(connection Connection) *Protocol {
 	return &protocol
 }
 
-func (protocol *Protocol) Send(request Request) (Message, error) {
+func (protocol *Protocol) Send(request Request) (Response, error) {
 	length, err := request.ResponseLength()
 	if err != nil {
 		return nil, err
