@@ -70,7 +70,6 @@ func (p Proxy) handleConnection(clientConnection net.Conn, protocol *Protocol) {
 		)
 		clientConnection.Write(response)
 	}
-	// TODO: handle clients disconnecting... but how? clientConnection.Close()
 }
 
 func extractRequest(read []byte) (Request, error) {
