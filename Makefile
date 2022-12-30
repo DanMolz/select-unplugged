@@ -1,10 +1,11 @@
 .DEFAULT_GOAL := build
 SHELL := /bin/bash
+MAKEFLAGS += --jobs=4
 
 lint:
 	go vet ./...
 
-test: lint
+test:
 	go test -cover ./...
 
 watch:
@@ -14,10 +15,18 @@ watch:
 		read -r _; \
 	done < <(fswatch -o .)
 
-build: test
+mkdir-bin:
 	mkdir -p bin
+
+build-deps: mkdir-bin lint test
+
+build-arm: build-deps
 	GOOS=linux GOARCH=arm GOARM=5 go build -o bin/select-unplugged-linux-arm
+
+build-native: build-deps
 	go build -o bin/select-unplugged
+
+build: build-arm build-native
 
 cover:
 	go test -coverprofile coverage.out ./...
