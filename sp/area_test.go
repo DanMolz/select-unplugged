@@ -28,10 +28,10 @@ func TestAreaMessage(t *testing.T) {
 		words    Words
 		expected Message
 	}{
-		{0, 0, []byte("\x00\x00\x00\x00\x00")},
-		{0x12345678, 59, []byte("\x3b\x78\x56\x34\x12")},
-		{0x0000a000, 0, Message("\x00\x00\xa0\x00\x00")},
-		{0x0000a093, 3, Message("\x03\x93\xa0\x00\x00")},
+		{0, 1, []byte("\x00\x00\x00\x00\x00")},
+		{0x12345678, 60, []byte("\x3b\x78\x56\x34\x12")},
+		{0x0000a000, 1, Message("\x00\x00\xa0\x00\x00")},
+		{0x0000a093, 4, Message("\x03\x93\xa0\x00\x00")},
 	}
 
 	for _, tt := range cases {

@@ -11,6 +11,13 @@ type Area struct {
 	words   Words
 }
 
+func NewArea(address Address, words Words) Area {
+	return Area{
+		address: address,
+		words:   words,
+	}
+}
+
 func (area Area) String() string {
 	return fmt.Sprintf(
 		"Area(0x%08x, %v)",
@@ -21,7 +28,7 @@ func (area Area) String() string {
 
 func (area Area) Message() Message {
 	return append(
-		[]byte{uint8(area.words)},
+		[]byte{uint8(area.words - 1)},
 		binary.LittleEndian.AppendUint32(Message{}, uint32(area.address))...,
 	)
 }

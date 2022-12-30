@@ -12,7 +12,7 @@ func TestProtocolSend(t *testing.T) {
 
 	req := NewRequestQuery(Area{
 		address: 0x01,
-		words:   1,
+		words:   2,
 	})
 	connection.On("Write", []byte(req)).Return(len(req), nil)
 	buf := make([]byte, 14)

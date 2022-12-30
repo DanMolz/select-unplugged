@@ -37,8 +37,8 @@ func TestRequestResponseLength(t *testing.T) {
 		length  *int
 		err     error
 	}{
-		{NewRequestQuery(Area{0xa000, 0}), i(12), nil},
-		{NewRequestQuery(Area{0xa000, 0xff}), i(522), nil},
+		{NewRequestQuery(Area{0xa000, 1}), i(12), nil},
+		{NewRequestQuery(Area{0xa000, 0x100}), i(522), nil},
 		{Request("Z"), nil, errors.New("Unknown message type 'Z'")},
 		{
 			NewRequestWrite(Memory{
@@ -78,8 +78,8 @@ func TestNewRequestQuery(t *testing.T) {
 		area    Area
 		request Request
 	}{
-		{Area{0x0000a000, 0}, Request("Q\x00\x00\xa0\x00\x00\x9d\x4b")},
-		{Area{0x0000a093, 3}, Request("Q\x03\x93\xa0\x00\x00\x53\x9d")},
+		{Area{0x0000a000, 1}, Request("Q\x00\x00\xa0\x00\x00\x9d\x4b")},
+		{Area{0x0000a093, 4}, Request("Q\x03\x93\xa0\x00\x00\x53\x9d")},
 	} {
 		request := NewRequestQuery(tt.area)
 		assert.Equal(t, tt.request, request)

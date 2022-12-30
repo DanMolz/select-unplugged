@@ -2,6 +2,8 @@ package sp
 
 import (
 	"sync"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Protocol sends requests and receives responses via the connection.
@@ -24,6 +26,7 @@ func (protocol *Protocol) Send(request Request) (Response, error) {
 	}
 	protocol.mutex.Lock()
 	defer protocol.mutex.Unlock()
+	log.Debugf("> %s", request)
 	protocol.connection.Write([]byte(request))
 	data := make([]byte, 0)
 	for len(data) < *length && err == nil {
@@ -35,5 +38,6 @@ func (protocol *Protocol) Send(request Request) (Response, error) {
 		}
 		data = append(data, buf[:partlength]...)
 	}
+	log.Debugf("< %s", Response(data))
 	return data, err
 }
