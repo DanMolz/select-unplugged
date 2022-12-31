@@ -26,6 +26,14 @@ func (area Area) String() string {
 	)
 }
 
+func (area Area) Address() Address {
+	return area.address
+}
+
+func (area Area) Words() Words {
+	return area.words
+}
+
 func (area Area) Message() Message {
 	return append(
 		[]byte{uint8(area.words - 1)},
