@@ -1,29 +1,24 @@
 package sp
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 )
 
 type Memory struct {
-	address Address
-	data    Data
+	area Area
+	data Data
 }
 
-func NewMemory(address Address, words Words) Memory {
-	if words == 0 {
-		panic(errors.New("Non-zero word length required"))
-	}
+func NewMemory(area Area) Memory {
 	memory := Memory{
-		address: address,
-		data:    bytes.Repeat([]byte("\x00"), int(words)*2),
+		area: area,
 	}
 	return memory
 }
 
-func (m Memory) Address() Address {
-	return m.address
+func (m Memory) Area() Area {
+	return m.area
 }
 
 func (m Memory) Words() Words {
@@ -39,5 +34,8 @@ func (m *Memory) SetData(data Data) error {
 }
 
 func (m Memory) Data() Data {
+	if m.data == nil {
+		panic(errors.New("Read from uninitialized Memory"))
+	}
 	return m.data
 }

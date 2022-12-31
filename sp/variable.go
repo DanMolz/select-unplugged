@@ -4,18 +4,10 @@ type Variable struct {
 	memory Memory
 }
 
-func NewVariable(address Address, words Words) Variable {
+func NewVariable(area Area) Variable {
 	return Variable{
-		memory: NewMemory(address, words),
+		memory: NewMemory(area),
 	}
-}
-
-func (v Variable) Address() Address {
-	return v.memory.Address()
-}
-
-func (v Variable) Words() Words {
-	return v.memory.Words()
 }
 
 func (v Variable) Memory() Memory {
@@ -23,7 +15,7 @@ func (v Variable) Memory() Memory {
 }
 
 func (v Variable) Area() Area {
-	return NewArea(v.Address(), v.Words())
+	return v.memory.Area()
 }
 
 type ConverterFloat64 func(int, Scales) float64

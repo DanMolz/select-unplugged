@@ -42,8 +42,8 @@ func TestRequestResponseLength(t *testing.T) {
 		{Request("Z"), nil, errors.New("Unknown message type 'Z'")},
 		{
 			NewRequestWrite(Memory{
-				address: 0x01f,
-				data:    []byte("0000000000000000"),
+				area: Area{address: 0x01f},
+				data: []byte("0000000000000000"),
 			}),
 			i(26),
 			nil,
@@ -89,8 +89,8 @@ func TestNewRequestQuery(t *testing.T) {
 func TestNewRequestWrite(t *testing.T) {
 	expected := Request("W\x07\x00\x00\x1f\x00\x35\x7a\xb6\xd1\x36\x04\x08\x0c\x87\xce\x81\xc1\x82\xc6\x6f\xa5\xfb\x35w\xaa")
 	actual := NewRequestWrite(Memory{
-		address: 0x001f0000,
-		data:    Data("\xb6\xd1\x36\x04\x08\x0c\x87\xce\x81\xc1\x82\xc6\x6f\xa5\xfb\x35"),
+		area: NewArea(0x001f0000, 8),
+		data: Data("\xb6\xd1\x36\x04\x08\x0c\x87\xce\x81\xc1\x82\xc6\x6f\xa5\xfb\x35"),
 	})
 	assert.Equal(t, expected, actual)
 }

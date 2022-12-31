@@ -3,6 +3,8 @@ package sp
 import (
 	"bytes"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAreaString(t *testing.T) {
@@ -20,6 +22,12 @@ func TestAreaString(t *testing.T) {
 			t.Errorf("Area(%v, %v).String() => %v, actual %v", tt.address, tt.words, tt.expected, actual)
 		}
 	}
+}
+
+func TestNewAreaErrors(t *testing.T) {
+	assert.PanicsWithError(t, "Non-zero word length required", func() {
+		NewArea(0, 0)
+	})
 }
 
 func TestAreaMessage(t *testing.T) {

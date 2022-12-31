@@ -2,7 +2,6 @@ package sp
 
 import (
 	"bytes"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,23 +10,16 @@ import (
 func TestNewMemory(t *testing.T) {
 	for _, tt := range []struct {
 		words Words
-		data  string
 	}{
-		{1, "\x00\x00"},
-		{2, "\x00\x00\x00\x00"},
-		{512, strings.Repeat("\x00", 1024)},
+		{1},
+		{2},
+		{512},
 	} {
-		memory := NewMemory(0, tt.words)
-		if !bytes.Equal(memory.data, Data(tt.data)) {
-			t.Errorf("Expected memory to contain %v, but it contained %v", Data(tt.data), memory.data)
-		}
+		assert.PanicsWithError(t, "Read from uninitialized Memory", func() {
+			memory := NewMemory(NewArea(0, tt.words))
+			memory.Data()
+		})
 	}
-}
-
-func TestNewMemoryErrors(t *testing.T) {
-	assert.PanicsWithError(t, "Non-zero word length required", func() {
-		NewMemory(0, 0)
-	})
 }
 
 func TestMemorySetDataRejectsIncorrectSize(t *testing.T) {

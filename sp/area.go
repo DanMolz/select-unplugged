@@ -3,6 +3,7 @@ package sp
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 )
 
@@ -12,6 +13,9 @@ type Area struct {
 }
 
 func NewArea(address Address, words Words) Area {
+	if words == 0 {
+		panic(errors.New("Non-zero word length required"))
+	}
 	return Area{
 		address: address,
 		words:   words,
