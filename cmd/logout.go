@@ -16,9 +16,9 @@ var logoutCmd = &cobra.Command{
 		spConnection := sp.ConnectionSerial{}
 		spConnection.Open()
 		protocol := sp.NewProtocol(&spConnection)
-		memory, _ := sp.NewMemory(40973 /* SP Link Disconnecting Comms 1 */, 1)
+		memory := sp.NewMemory(40973 /* SP Link Disconnecting Comms 1 */, 1)
 		memory.SetData([]byte("\x01\x00"))
-		request := sp.NewRequestWrite(*memory)
+		request := sp.NewRequestWrite(memory)
 		response, _ := protocol.Send(request)
 		log.Printf("Response: %s", response)
 	},

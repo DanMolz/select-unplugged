@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewMemory(t *testing.T) {
@@ -15,10 +17,7 @@ func TestNewMemory(t *testing.T) {
 		{2, "\x00\x00\x00\x00"},
 		{512, strings.Repeat("\x00", 1024)},
 	} {
-		memory, err := NewMemory(0, tt.words)
-		if err != nil {
-			t.Errorf("Expected err to be nil, but it was %v", err.Error())
-		}
+		memory := NewMemory(0, tt.words)
 		if !bytes.Equal(memory.data, Data(tt.data)) {
 			t.Errorf("Expected memory to contain %v, but it contained %v", Data(tt.data), memory.data)
 		}
@@ -26,20 +25,9 @@ func TestNewMemory(t *testing.T) {
 }
 
 func TestNewMemoryErrors(t *testing.T) {
-	for _, tt := range []struct {
-		words Words
-		err   string
-	}{
-		{0, "Non-zero word length required"},
-	} {
-		memory, err := NewMemory(0, tt.words)
-		if memory != nil {
-			t.Errorf("Expected memory to be nil, but it was %v", memory)
-		}
-		if err.Error() != tt.err {
-			t.Errorf("Expected %v, actual %v", tt.err, err.Error())
-		}
-	}
+	assert.PanicsWithError(t, "Non-zero word length required", func() {
+		NewMemory(0, 0)
+	})
 }
 
 func TestMemorySetDataRejectsIncorrectSize(t *testing.T) {

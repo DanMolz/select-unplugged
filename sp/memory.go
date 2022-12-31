@@ -11,16 +11,23 @@ type Memory struct {
 	data    Data
 }
 
-func NewMemory(address Address, words Words) (*Memory, error) {
+func NewMemory(address Address, words Words) Memory {
 	if words == 0 {
-		return nil, errors.New("Non-zero word length required")
+		panic(errors.New("Non-zero word length required"))
 	}
 	memory := Memory{
 		address: address,
 		data:    bytes.Repeat([]byte("\x00"), int(words)*2),
 	}
-	return &memory, nil
+	return memory
+}
 
+func (m Memory) Address() Address {
+	return m.address
+}
+
+func (m Memory) Words() Words {
+	return Words(len(m.data) / 2)
 }
 
 func (m *Memory) SetData(data Data) error {

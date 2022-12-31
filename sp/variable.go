@@ -1,6 +1,29 @@
 package sp
 
-type Variable interface {
+type Variable struct {
+	memory Memory
+}
+
+func NewVariable(address Address, words Words) Variable {
+	return Variable{
+		memory: NewMemory(address, words),
+	}
+}
+
+func (v Variable) Address() Address {
+	return v.memory.Address()
+}
+
+func (v Variable) Words() Words {
+	return v.memory.Words()
+}
+
+func (v Variable) Memory() Memory {
+	return v.memory
+}
+
+func (v Variable) Area() Area {
+	return NewArea(v.Address(), v.Words())
 }
 
 type ConverterFloat64 func(int, Scales) float64
