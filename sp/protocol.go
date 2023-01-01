@@ -86,6 +86,7 @@ func (protocol *Protocol) Write(variable Variable) error {
 }
 
 func (protocol *Protocol) Login(password string) error {
+	// TODO: check the comm port at login to determine if we're already logged in / how to disconnect later
 	err := protocol.Query([]*Variable{&VarLoginHash})
 	if err != nil {
 		return err
@@ -109,6 +110,7 @@ func (protocol *Protocol) Login(password string) error {
 }
 
 func (protocol *Protocol) Logout() error {
+	// TODO: check which comm port we're actually connected to before disconnnecting port 1
 	// TODO: make it possible to call .SetValue(1) here?
 	VarSpLinkDisconnectingComms1.memory.SetData(Data("\x01\x00"))
 	return protocol.Write(VarSpLinkDisconnectingComms1)
