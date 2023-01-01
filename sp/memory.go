@@ -3,6 +3,8 @@ package sp
 import (
 	"errors"
 	"fmt"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Memory struct {
@@ -22,15 +24,23 @@ func (m Memory) Area() Area {
 }
 
 func (m Memory) Words() Words {
-	return Words(len(m.data) / 2)
+	return m.area.Words()
 }
 
-func (m *Memory) SetData(data Data) error {
-	if len(data) == len(m.data) {
-		m.data = data
-		return nil
+func (m Memory) Bytes() int {
+	return int(m.Words() * 2)
+}
+
+func (m *Memory) SetData(data Data) {
+	log.Debugf("Setting data to %x", data)
+	if len(data) != m.Bytes() {
+		panic(errors.New(fmt.Sprintf(
+			"Got %d bytes, expecting %d",
+			len(data),
+			m.Bytes(),
+		)))
 	}
-	return errors.New(fmt.Sprintf("Got %d bytes, expecting %d", len(data), len(m.data)))
+	m.data = data
 }
 
 func (m Memory) Data() Data {

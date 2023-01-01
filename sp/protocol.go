@@ -21,6 +21,7 @@ func NewProtocol(connection Connection) *Protocol {
 	return &protocol
 }
 
+// Send a raw request to the inverter
 func (protocol *Protocol) Send(request Request) (Response, error) {
 	length, err := request.ResponseLength()
 	if err != nil {
@@ -44,6 +45,36 @@ func (protocol *Protocol) Send(request Request) (Response, error) {
 	return data, err
 }
 
+// Query one or more variables
+func (protocol *Protocol) Query(variables []*Variable) error {
+	areas := []Area{}
+	for i := 0; i < len(variables); i++ {
+		areas = append(areas, (variables)[i].Area())
+	}
+	areas = ReduceAreas(areas)
+	memories := []Memory{}
+	for i := 0; i < len(areas); i++ {
+		area := areas[i]
+		response, err := protocol.Send(NewRequestQuery(area))
+		if err != nil {
+			return err
+		}
+		data, err := Message(response).Data()
+		if err != nil {
+			return err
+		}
+		memory := NewMemory(area)
+		memory.SetData(*data)
+		memories = append(memories, memory)
+	}
+	for i := 0; i < len(variables); i++ {
+		variable := variables[i]
+		memory := ExtractMemory(variable.Area(), memories)
+		variable.memory.SetData(memory.Data())
+	}
+	return nil
+}
+
 func (protocol *Protocol) Login(password string) error {
 	loginHashMemory := VarLoginHash.Memory()
 
@@ -63,16 +94,12 @@ func (protocol *Protocol) Login(password string) error {
 		return err
 	}
 
-	readLoginStatusRequest := NewRequestQuery(VarLoginStatus.Area())
-	readLoginStatusResponse, err := protocol.Send(readLoginStatusRequest)
+	variables := []*Variable{&VarLoginStatus}
+	err = protocol.Query(variables)
 	if err != nil {
 		return err
 	}
-	loginStatus, err := Message(readLoginStatusResponse).Data()
-	if err != nil {
-		return err
-	}
-	if !bytes.Equal(*loginStatus, []byte("\x01\x00")) {
+	if !bytes.Equal(VarLoginStatus.Memory().Data(), []byte("\x01\x00")) {
 		return errors.New("Invalid login status")
 	}
 	return nil

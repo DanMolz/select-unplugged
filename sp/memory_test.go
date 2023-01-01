@@ -28,16 +28,14 @@ func TestMemorySetDataRejectsIncorrectSize(t *testing.T) {
 		data     Data
 		expected string
 	}{
-		{Memory{data: Data("aa")}, Data(""), "Got 0 bytes, expecting 2"},
-		{Memory{data: Data("aa")}, Data("a"), "Got 1 bytes, expecting 2"},
-		{Memory{data: Data("aa")}, Data("aaa"), "Got 3 bytes, expecting 2"},
-		{Memory{data: Data("aaaa")}, Data("aa"), "Got 2 bytes, expecting 4"},
+		{Memory{area: Area{words: 1}}, Data(""), "Got 0 bytes, expecting 2"},
+		{Memory{area: Area{words: 1}}, Data("a"), "Got 1 bytes, expecting 2"},
+		{Memory{area: Area{words: 1}}, Data("aaa"), "Got 3 bytes, expecting 2"},
+		{Memory{area: Area{words: 2}}, Data("aa"), "Got 2 bytes, expecting 4"},
 	} {
-		actual := tt.memory.SetData(tt.data)
-		if actual.Error() == tt.expected {
-			continue
-		}
-		t.Errorf("%v.SetData(%v) => %v, actual %v", tt.memory, tt.data, tt.expected, actual)
+		assert.PanicsWithError(t, tt.expected, func() {
+			tt.memory.SetData(tt.data)
+		})
 	}
 }
 
@@ -46,14 +44,11 @@ func TestMemorySetDataGetData(t *testing.T) {
 		memory Memory
 		data   Data
 	}{
-		{Memory{data: Data("aa")}, Data("aa")},
-		{Memory{data: Data("aa")}, Data("bb")},
-		{Memory{data: Data("aaaa")}, Data("cccc")},
+		{Memory{area: Area{words: 1}}, Data("aa")},
+		{Memory{area: Area{words: 1}}, Data("bb")},
+		{Memory{area: Area{words: 2}}, Data("cccc")},
 	} {
-		error := tt.memory.SetData(tt.data)
-		if error != nil {
-			t.Errorf(error.Error())
-		}
+		tt.memory.SetData(tt.data)
 		actual := tt.memory.data
 		if bytes.Equal(actual, tt.data) {
 			continue

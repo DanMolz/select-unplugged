@@ -1,7 +1,5 @@
 package sp
 
-import "log"
-
 func ExtractMemory(area Area, memories []Memory) Memory {
 
 	for i := 0; i < len(memories); i++ {
@@ -14,7 +12,6 @@ func ExtractMemory(area Area, memories []Memory) Memory {
 		if end > Address(memory.Area().Words()*2) {
 			continue
 		}
-		log.Printf("start: %d, end: %d", start, end)
 		return Memory{
 			area: area,
 			data: memory.Data()[start:end],
