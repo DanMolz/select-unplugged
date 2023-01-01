@@ -18,3 +18,6 @@ var VarLoginHash = NewVariable(NewArea(2031616, 8))
 
 // ushort, 1 if we're logged in, CRC fails if we're not
 var VarLoginStatus = NewVariable(NewArea(2031632, 1))
+
+// ushort, disconnect from comm port 1
+var VarSpLinkDisconnectingComms1 = NewVariable(NewArea(40973, 1))

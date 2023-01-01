@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func CalculateLoginHash(password string, readHash Message) Message {
+func CalculateLoginHash(password string, readHash Data) Data {
 	// pad the password with spaces to 32 characters
 	passwordMessage := Message(fmt.Sprintf("%-32s", password))
 
@@ -14,10 +14,10 @@ func CalculateLoginHash(password string, readHash Message) Message {
 	result := md5.Sum([]byte(buffer))
 
 	// adjust to little endian pairs
-	resultLe := []byte{}
+	resultLe := Data{}
 	for i := 0; i < len(result); i = i + 2 {
 		resultLe = append(resultLe, result[i+1], result[i])
 	}
 
-	return Message(resultLe[:])
+	return resultLe[:]
 }

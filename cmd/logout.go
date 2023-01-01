@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/neerolyte/select-unplugged/sp"
 	"github.com/spf13/cobra"
@@ -9,18 +9,17 @@ import (
 
 var logoutCmd = &cobra.Command{
 	Use:   "logout",
-	Short: "Logout to the SP Pro",
-	Long:  `Logout to the SP Pro`,
+	Short: "Logout of the SP Pro",
+	Long:  `Logout of the SP Pro`,
 	Run: func(cmd *cobra.Command, args []string) {
-		log.Printf("Connecting to SP Pro")
 		spConnection := sp.ConnectionSerial{}
 		spConnection.Open()
 		protocol := sp.NewProtocol(&spConnection)
-		memory := sp.NewMemory(sp.NewArea(40973 /* SP Link Disconnecting Comms 1 */, 1))
-		memory.SetData([]byte("\x01\x00"))
-		request := sp.NewRequestWrite(memory)
-		response, _ := protocol.Send(request)
-		log.Printf("Response: %s", response)
+		err := protocol.Logout()
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("Success")
 	},
 }
 

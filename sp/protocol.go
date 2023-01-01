@@ -42,6 +42,7 @@ func (protocol *Protocol) Send(request Request) (Response, error) {
 		data = append(data, buf[:partlength]...)
 	}
 	log.Debugf("< %s", Response(data))
+	// TODO: validate CRC here
 	return data, err
 }
 
@@ -75,27 +76,29 @@ func (protocol *Protocol) Query(variables []*Variable) error {
 	return nil
 }
 
+func (protocol *Protocol) Write(variable Variable) error {
+	request := NewRequestWrite(variable.Memory())
+	_, err := protocol.Send(request)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (protocol *Protocol) Login(password string) error {
-	loginHashMemory := VarLoginHash.Memory()
-
-	readLoginHashRequest := NewRequestQuery(VarLoginHash.Area())
-	loginHashResponse, _ := protocol.Send(readLoginHashRequest)
-	loginHash, err := Message(loginHashResponse).Data()
+	err := protocol.Query([]*Variable{&VarLoginHash})
 	if err != nil {
 		return err
 	}
 
-	responseHash := CalculateLoginHash(password, *loginHash)
-
-	loginHashMemory.SetData(Data(responseHash))
-	writeLoginHashRequest := NewRequestWrite(loginHashMemory)
-	_, err = protocol.Send(writeLoginHashRequest)
+	responseHash := CalculateLoginHash(password, VarLoginHash.Memory().Data())
+	VarLoginHash.memory.SetData(responseHash)
+	err = protocol.Write(VarLoginHash)
 	if err != nil {
 		return err
 	}
 
-	variables := []*Variable{&VarLoginStatus}
-	err = protocol.Query(variables)
+	err = protocol.Query([]*Variable{&VarLoginStatus})
 	if err != nil {
 		return err
 	}
@@ -103,4 +106,10 @@ func (protocol *Protocol) Login(password string) error {
 		return errors.New("Invalid login status")
 	}
 	return nil
+}
+
+func (protocol *Protocol) Logout() error {
+	// TODO: make it possible to call .SetValue(1) here?
+	VarSpLinkDisconnectingComms1.memory.SetData(Data("\x01\x00"))
+	return protocol.Write(VarSpLinkDisconnectingComms1)
 }
