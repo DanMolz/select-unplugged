@@ -39,7 +39,7 @@ func TestRequestResponseLength(t *testing.T) {
 	}{
 		{NewRequestQuery(Area{0xa000, 1}), i(12), nil},
 		{NewRequestQuery(Area{0xa000, 0x100}), i(522), nil},
-		{Request("Z"), nil, errors.New("Unknown message type 'Z'")},
+		{NewRequestFromMessage(Message("Z")), nil, errors.New("Unknown message type 'Z'")},
 		{
 			NewRequestWrite(Memory{
 				area: Area{address: 0x01f},
@@ -63,9 +63,9 @@ func TestRequestType(t *testing.T) {
 		messageType *MessageType
 		err         error
 	}{
-		{Request("Q"), &query, nil},
-		{Request("W"), &write, nil},
-		{Request("Z"), nil, errors.New("Unknown message type 'Z'")},
+		{NewRequestFromMessage(Message("Q")), &query, nil},
+		{NewRequestFromMessage(Message("W")), &write, nil},
+		{NewRequestFromMessage(Message("Z")), nil, errors.New("Unknown message type 'Z'")},
 	} {
 		requestType, err := tt.request.Type()
 		assert.Equal(t, tt.messageType, requestType)
@@ -78,8 +78,8 @@ func TestNewRequestQuery(t *testing.T) {
 		area    Area
 		request Request
 	}{
-		{Area{0x0000a000, 1}, Request("Q\x00\x00\xa0\x00\x00\x9d\x4b")},
-		{Area{0x0000a093, 4}, Request("Q\x03\x93\xa0\x00\x00\x53\x9d")},
+		{Area{0x0000a000, 1}, NewRequestFromMessage(Message("Q\x00\x00\xa0\x00\x00\x9d\x4b"))},
+		{Area{0x0000a093, 4}, NewRequestFromMessage(Message("Q\x03\x93\xa0\x00\x00\x53\x9d"))},
 	} {
 		request := NewRequestQuery(tt.area)
 		assert.Equal(t, tt.request, request)
@@ -87,7 +87,9 @@ func TestNewRequestQuery(t *testing.T) {
 }
 
 func TestNewRequestWrite(t *testing.T) {
-	expected := Request("W\x07\x00\x00\x1f\x00\x35\x7a\xb6\xd1\x36\x04\x08\x0c\x87\xce\x81\xc1\x82\xc6\x6f\xa5\xfb\x35w\xaa")
+	expected := NewRequestFromMessage(Message(
+		"W\x07\x00\x00\x1f\x00\x35\x7a\xb6\xd1\x36\x04\x08\x0c\x87\xce\x81\xc1\x82\xc6\x6f\xa5\xfb\x35w\xaa",
+	))
 	actual := NewRequestWrite(Memory{
 		area: NewArea(0x001f0000, 8),
 		data: Data("\xb6\xd1\x36\x04\x08\x0c\x87\xce\x81\xc1\x82\xc6\x6f\xa5\xfb\x35"),

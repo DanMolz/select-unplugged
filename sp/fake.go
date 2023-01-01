@@ -45,12 +45,12 @@ func (f Fake) handleConnection(clientConnection net.Conn) {
 			"Read from %s: %s (%d)",
 			clientConnection.RemoteAddr().String(),
 			request,
-			len(request),
+			len(request.Message()),
 		)
 
 		// TODO: handle other data here
 		data := Message("\x01\x00")
-		response, err := NewResponse(request, data)
+		response, err := NewResponse(*request, data)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -59,8 +59,8 @@ func (f Fake) handleConnection(clientConnection net.Conn) {
 			"Write to %s: %s (%d)",
 			clientConnection.RemoteAddr().String(),
 			response,
-			len(response),
+			len(response.Message()),
 		)
-		clientConnection.Write(response)
+		clientConnection.Write(response.Message())
 	}
 }

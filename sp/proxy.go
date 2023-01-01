@@ -54,10 +54,10 @@ func (p Proxy) handleConnection(clientConnection net.Conn, protocol *Protocol) {
 			"Read from %s: %s (%d)",
 			clientConnection.RemoteAddr().String(),
 			request,
-			len(request),
+			len(request.Message()),
 		)
 
-		response, err := protocol.Send(request)
+		response, err := protocol.Send(*request)
 		if err != nil {
 			log.Fatalf("TODO: %s", err.Error())
 		}
@@ -66,17 +66,17 @@ func (p Proxy) handleConnection(clientConnection net.Conn, protocol *Protocol) {
 			"Write to %s: %s (%d)",
 			clientConnection.RemoteAddr().String(),
 			response,
-			len(response),
+			len(response.Message()),
 		)
-		clientConnection.Write(response)
+		clientConnection.Write(response.Message())
 	}
 }
 
-func extractRequest(read []byte) (Request, error) {
+func extractRequest(read []byte) (*Request, error) {
 	length, err := CalculateRequestLength(read)
 	if err != nil {
 		return nil, err
 	}
 
-	return Request(read[0:*length]), nil
+	return &Request{message: read[0:*length]}, nil
 }

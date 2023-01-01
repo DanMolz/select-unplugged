@@ -14,7 +14,7 @@ func TestProtocolSend(t *testing.T) {
 		address: 0x01,
 		words:   2,
 	})
-	connection.On("Write", []byte(req)).Return(len(req), nil)
+	connection.On("Write", []byte(req.Message())).Return(len(req.Message()), nil)
 	buf := make([]byte, 14)
 	connection.On("Read", &buf).Return(14, nil).Run(func(args mock.Arguments) {
 		arg := args.Get(0).(*[]byte)
@@ -25,6 +25,6 @@ func TestProtocolSend(t *testing.T) {
 	res, err := protocol.Send(req)
 
 	assert.Equal(t, nil, err)
-	assert.Equal(t, []byte("\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d"), []byte(res))
-	assert.Equal(t, 14, len(res))
+	assert.Equal(t, []byte("\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d"), []byte(res.Message()))
+	assert.Equal(t, 14, len(res.Message()))
 }

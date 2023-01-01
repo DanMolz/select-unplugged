@@ -22,7 +22,7 @@ func NewProtocol(connection Connection) *Protocol {
 }
 
 // Send a raw request to the inverter
-func (protocol *Protocol) Send(request Request) (Response, error) {
+func (protocol *Protocol) Send(request Request) (*Response, error) {
 	length, err := request.ResponseLength()
 	if err != nil {
 		return nil, err
@@ -30,7 +30,7 @@ func (protocol *Protocol) Send(request Request) (Response, error) {
 	protocol.mutex.Lock()
 	defer protocol.mutex.Unlock()
 	log.Debugf("> %s", request)
-	protocol.connection.Write([]byte(request))
+	protocol.connection.Write(request.Message())
 	data := make([]byte, 0)
 	for len(data) < *length && err == nil {
 		wantedLength := *length - len(data)
@@ -41,9 +41,10 @@ func (protocol *Protocol) Send(request Request) (Response, error) {
 		}
 		data = append(data, buf[:partlength]...)
 	}
-	log.Debugf("< %s", Response(data))
+	response := Response{message: data}
+	log.Debugf("< %s", response)
 	// TODO: validate CRC here
-	return data, err
+	return &response, err
 }
 
 // Query one or more variables
@@ -60,7 +61,7 @@ func (protocol *Protocol) Query(variables []*Variable) error {
 		if err != nil {
 			return err
 		}
-		data, err := Message(response).Data()
+		data, err := response.Message().Data()
 		if err != nil {
 			return err
 		}
@@ -82,6 +83,7 @@ func (protocol *Protocol) QueryOne(variable *Variable) error {
 
 func (protocol *Protocol) WriteOne(variable Variable) error {
 	request := NewRequestWrite(variable.Memory())
+	// TODO: check that response belongs to request
 	_, err := protocol.Send(request)
 	if err != nil {
 		return err

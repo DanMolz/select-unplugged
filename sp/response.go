@@ -7,15 +7,23 @@ import (
 )
 
 // Response message from SP Pro.
-type Response Message
+type Response struct {
+	message Message
+}
 
 func (r Response) String() string {
-	return fmt.Sprintf("Response(0x%s)", hex.EncodeToString(r))
+	return fmt.Sprintf("Response(0x%s)", hex.EncodeToString(r.Message()))
+}
+
+func (r Response) Message() Message {
+	return r.message
 }
 
 func NewResponse(request Request, data Message) (Response, error) {
-	response := request
-	response = append(request, data...)
-	response = binary.LittleEndian.AppendUint16(response, Crc(response))
-	return Response(response), nil
+	message := request.Message()
+	message = append(message, data...)
+	message = binary.LittleEndian.AppendUint16(message, Crc(message))
+	return Response{
+		message: message,
+	}, nil
 }

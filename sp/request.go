@@ -7,15 +7,24 @@ import (
 	"fmt"
 )
 
-type Request Message
+type Request struct {
+	message Message
+}
+
+func NewRequestFromMessage(message Message) Request {
+	return Request{
+		message: message,
+	}
+}
 
 func NewRequestQuery(area Area) Request {
-
 	message := []byte("Q")
 	message = append(message, area.Message()...)
 	message = binary.LittleEndian.AppendUint16(message, Crc(message))
 
-	return Request(message)
+	return Request{
+		message: message,
+	}
 }
 
 func NewRequestWrite(memory Memory) Request {
@@ -25,11 +34,17 @@ func NewRequestWrite(memory Memory) Request {
 	message = binary.LittleEndian.AppendUint16(message, Crc(message))
 	message = append(message, memory.data...)
 	message = binary.LittleEndian.AppendUint16(message, Crc(message))
-	return Request(message)
+	return Request{
+		message: message,
+	}
+}
+
+func (r Request) Message() Message {
+	return r.message
 }
 
 func (r Request) String() string {
-	return fmt.Sprintf("Request(0x%s)", hex.EncodeToString(r))
+	return fmt.Sprintf("Request(0x%s)", hex.EncodeToString(r.Message()))
 }
 
 // Calculate request length given enough bytes from a Message
@@ -58,7 +73,7 @@ func (r Request) ResponseLength() (*int, error) {
 	if err != nil {
 		return nil, err
 	}
-	requestLength := len(r)
+	requestLength := len(r.Message())
 	dataLength := r.DataLength()
 	if err != nil {
 		return nil, err
@@ -72,9 +87,9 @@ func (r Request) ResponseLength() (*int, error) {
 }
 
 func (r Request) DataLength() int {
-	return (int(r[1]) + 1) * 2
+	return (int(r.message[1]) + 1) * 2
 }
 
 func (r Request) Type() (*MessageType, error) {
-	return Message(r).Type()
+	return r.Message().Type()
 }
