@@ -48,6 +48,7 @@ func StatsSelectLiveRender(protocol *Protocol) string {
 	// "solarinverter_w": vars["CombinedKacoAcPowerHiRes"].get_value(self.scales),
 	bytes := VarBatterySoc.Memory().Data()
 	batterySoc := (float64(bytes[0]) + float64(bytes[1])*256) / MAGIC_RATIO_DIVISOR
+	// TODO: shift at least the integer conversion up to variable somehow
 	CommonScaleForDcVolts := float64(binary.LittleEndian.Uint16(VarCommonScaleForDcVolts.memory.Data()))
 	CommonScaleForDcCurrent := float64(binary.LittleEndian.Uint16(VarCommonScaleForDcCurrent.memory.Data()))
 	batteryEnergyInToday := float64(binary.LittleEndian.Uint32(VarBatteryEnergyInToday.Memory().Data())) * MAGIC_WH_MULTIPLIER * CommonScaleForDcVolts * CommonScaleForDcCurrent / MAGIC_WH_DIVISOR
