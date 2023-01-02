@@ -8,6 +8,9 @@ type ConnectionSerial struct {
 	serial *serial.Port
 }
 
+// Highlight missing interface methods early
+var _ Connection = (*ConnectionSerial)(nil)
+
 func (c *ConnectionSerial) Open() error {
 	config := &serial.Config{Name: "/dev/ttyUSB1", Baud: 57600}
 	serial, err := serial.OpenPort(config)

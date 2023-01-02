@@ -10,6 +10,7 @@ type ConnectionTcp struct {
 	conn *net.TCPConn
 }
 
+// Highlight missing interface methods early
 var _ Connection = (*ConnectionTcp)(nil)
 
 func (c *ConnectionTcp) Open() error {
