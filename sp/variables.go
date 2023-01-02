@@ -2,6 +2,8 @@ package sp
 
 type SpUint16 = uint16
 
+// TODO: construct variables in a function and inject them
+
 // uint, ac_w, 41107
 // var LoadAcPower variable = variableUint32{variable: {Address: AreaAddress{41107}}}
 //var LoadAcPower = NewVariableFloat64(41107, 2, ConvertUnsignedAcW)
@@ -21,3 +23,20 @@ var VarLoginStatus = NewVariable(NewArea(2031632, 1))
 
 // ushort, disconnect from comm port 1
 var VarSpLinkDisconnectingComms1 = NewVariable(NewArea(40973, 1))
+
+// uint, how much energy has gone in to the battery today
+var VarBatteryEnergyInToday = NewVariable(NewArea(41135, 2))
+
+// uint, how much energy has gone in to the battery total
+var VarBatteryEnergyInTotal = NewVariable(NewArea(41354, 2))
+
+// ushort, percent, battery state of charge
+var VarBatterySoc = NewVariable(NewArea(41089, 1))
+
+// ushort
+var VarCommonScaleForAcVolts = NewVariable(NewArea(41000, 1))
+var VarCommonScaleForAcCurrent = NewVariable(NewArea(41001, 1))
+var VarCommonScaleForDcVolts = NewVariable(NewArea(41002, 1))
+var VarCommonScaleForDcCurrent = NewVariable(NewArea(41003, 1))
+var VarCommonScaleForTemperature = NewVariable(NewArea(41004, 1))
+var VarCommonScaleForInternalVoltages = NewVariable(NewArea(41005, 1))
