@@ -13,7 +13,7 @@ var loginCmd = &cobra.Command{
 	Short: "Login to the SP Pro",
 	Long:  `Login to the SP Pro`,
 	Run: func(cmd *cobra.Command, args []string) {
-		spConnection := sp.ConnectionSerial{}
+		spConnection := sp.NewConnectionSerial(SerialPort)
 		spConnection.Open()
 		protocol := sp.NewProtocol(&spConnection)
 		err := protocol.Login(loginPassword)

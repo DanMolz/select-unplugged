@@ -5,14 +5,21 @@ import (
 )
 
 type ConnectionSerial struct {
-	serial *serial.Port
+	serial   *serial.Port
+	portName string
 }
 
 // Highlight missing interface methods early
 var _ Connection = (*ConnectionSerial)(nil)
 
+func NewConnectionSerial(port string) ConnectionSerial {
+	return ConnectionSerial{
+		portName: port,
+	}
+}
+
 func (c *ConnectionSerial) Open() error {
-	config := &serial.Config{Name: "/dev/ttyUSB1", Baud: 57600}
+	config := &serial.Config{Name: c.portName, Baud: 57600}
 	serial, err := serial.OpenPort(config)
 	if err != nil {
 		return err

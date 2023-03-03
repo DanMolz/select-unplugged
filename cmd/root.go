@@ -8,6 +8,7 @@ import (
 )
 
 var Verbose bool
+var SerialPort string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -45,6 +46,6 @@ func init() {
 	// rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 	rootCmd.Version = "0.0.0"
-	//rootCmd.PersistentFlags().BoolVar(&Verbose, "verbose", false, "verbose output")
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "verbose output")
+	rootCmd.PersistentFlags().StringVarP(&SerialPort, "port", "", "/dev/ttyUSB0", "serial port")
 }
