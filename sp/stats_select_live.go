@@ -25,6 +25,8 @@ func StatsSelectLiveRender(protocol *Protocol) string {
 		&VarCommonScaleForDcVolts,
 		&VarCommonScaleForDcCurrent,
 	}
+
+	log.Debugf("Querying variables: %v", variables)
 	protocol.Query(variables)
 
 	// "battery_in_wh_today": vars["DCkWhInToday"].get_value(self.scales) / 1000,
