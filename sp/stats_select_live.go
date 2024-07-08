@@ -90,6 +90,8 @@ func StatsSelectLiveRenderV2(protocol *Protocol) {
 		&VarGridSoftwareVersion,
 		// &VarBuildDate,
 		&VarChargeStatus,
+		&VarInverterRunHrsTotalAcc1,
+		&VarInverterRunHrsTotalAcc2,
 	}
 
 	log.Printf("Querying variables: %v", variables)
