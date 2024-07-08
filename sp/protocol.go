@@ -62,12 +62,10 @@ func (protocol *Protocol) Query(variables []*Variable) error {
 		if err != nil {
 			return err
 		}
-		log.Debugf("Response: %s", response.Message())
 		data, err := response.Message().Data()
 		if err != nil {
 			return err
 		}
-		log.Debugf("Data: %s", data)
 		memory := NewMemory(area)
 		memory.SetData(*data)
 		memories = append(memories, memory)
