@@ -3,7 +3,6 @@ package sp
 import (
 	"encoding/binary"
 	"fmt"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -28,6 +27,7 @@ func StatsSelectLiveRender(protocol *Protocol) string {
 		&VarACLoadkWhTotalAcc,
 		&VarLoadAcPower,
 		&VarInverterTime,
+		&TechnicalData,
 	}
 
 	log.Debugf("Querying variables: %v", variables)
@@ -65,14 +65,12 @@ func StatsSelectLiveRender(protocol *Protocol) string {
 	// Testing
 	acLoadkWhTotalAcc := float64(binary.LittleEndian.Uint32(VarACLoadkWhTotalAcc.Memory().Data()))
 	log.Debugf("AC Lifetime Solar Energy: %f", acLoadkWhTotalAcc)
-
 	loadAcPower := float64(binary.LittleEndian.Uint32(VarLoadAcPower.Memory().Data()))
 	log.Debugf("AC Load Power: %f", loadAcPower)
 
-	inverterTime := binary.LittleEndian.Uint64(VarInverterTime.Memory().Data())
-	inverterTimeObj := time.Unix(int64(inverterTime), 0)
-	formattedTime := inverterTimeObj.Format("02-01-2006T15:04:05")
-	log.Debugf("Inverter Time: %s", formattedTime)
+	//TechnicalData
+	log.Debugf("TechnicalData: %v", TechnicalData.Memory().Data())
+
 
 	return fmt.Sprintf(
 		"Battery in kWh today: %f\nBattery SoC %%: %f\n",
