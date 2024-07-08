@@ -62,10 +62,10 @@ func StatsSelectLiveRender(protocol *Protocol) string {
 
 	// Testing
 	acLoadkWhTotalAcc := float64(binary.LittleEndian.Uint32(VarACLoadkWhTotalAcc.Memory().Data()))
-	log.Debugf("AC Lifetime Solar Energy: %d", acLoadkWhTotalAcc)
+	log.Debugf("AC Lifetime Solar Energy: %f", acLoadkWhTotalAcc)
 
 	loadAcPower := float64(binary.LittleEndian.Uint32(VarLoadAcPower.Memory().Data()))
-	log.Debugf("AC Load Power: %d", loadAcPower)
+	log.Debugf("AC Load Power: %f", loadAcPower)
 
 	return fmt.Sprintf(
 		"Battery in kWh today: %f\nBattery SoC %%: %f\n",
