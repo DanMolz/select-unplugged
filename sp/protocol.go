@@ -57,14 +57,19 @@ func (protocol *Protocol) Query(variables []*Variable) error {
 	memories := []Memory{}
 	for i := 0; i < len(areas); i++ {
 		area := areas[i]
-		response, err := protocol.Send(NewRequestQuery(area))
+		log.Printf("Querying area %s", area)
+		requestQuery := NewRequestQuery(area)
+		log.Printf("Request: %s", requestQuery)
+		response, err := protocol.Send(requestQuery)
 		if err != nil {
 			return err
 		}
+		log.Printf("Response: %s", response.Message())
 		data, err := response.Message().Data()
 		if err != nil {
 			return err
 		}
+		log.Printf("Data: %s", data)
 		memory := NewMemory(area)
 		memory.SetData(*data)
 		memories = append(memories, memory)
@@ -92,8 +97,6 @@ func (protocol *Protocol) WriteOne(variable Variable) error {
 }
 
 func (protocol *Protocol) Login(password string) error {
-	log.Printf("Logging in with password - %s", password)
-
 	// TODO: check the comm port at login to determine if we're already logged in / how to disconnect later
 	err := protocol.QueryOne(&VarLoginHash)
 	if err != nil {
@@ -114,7 +117,7 @@ func (protocol *Protocol) Login(password string) error {
 		return err
 	}
 	log.Printf("Login status: %s", VarLoginStatus.Memory().Data())
-	
+
 	if !bytes.Equal(VarLoginStatus.Memory().Data(), []byte("\x01\x00")) {
 		return errors.New("Invalid login status")
 	}

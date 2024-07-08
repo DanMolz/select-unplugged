@@ -1,8 +1,6 @@
 package sp
 
 import (
-	"log"
-
 	"github.com/tarm/serial"
 )
 
@@ -26,7 +24,6 @@ func (c *ConnectionSerial) Open() error {
 	if err != nil {
 		return err
 	}
-	log.Println("Opened serial port successfully")
 	c.serial = serial
 	return nil
 }
