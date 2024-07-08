@@ -118,11 +118,11 @@ func StatsSelectLiveRenderV2(protocol *Protocol) {
 	loadAcPower := float64(binary.LittleEndian.Uint32(VarLoadAcPower.Memory().Data()))
 	log.Printf("loadAcPower: %f", loadAcPower)
 
-	dcVolts := float64(binary.LittleEndian.Uint16(VarDCVolts.memory.Data()))
+	dcVolts := float64(binary.LittleEndian.Uint32(VarDCVolts.memory.Data()))
 	log.Printf("dcVolts: %f", dcVolts)
 
 	dcBatteryPowerbytes := convert2UShortsInto1Uint(VarDCBatteryPower.Memory().Data())
-	dcBatteryPower := float32(dcBatteryPowerbytes) * -1.0 * float32(CommonScaleForDcVolts) * float32(CommonScaleForDcCurrent) / 3276800.0
+	dcBatteryPower := float64(dcBatteryPowerbytes) * -1.0 * float64(CommonScaleForDcVolts) * float64(CommonScaleForDcCurrent) / 3276800.0
 	log.Printf("dcBatteryPower: %f", dcBatteryPower)
 
 	versionNumber := float64(binary.LittleEndian.Uint16(VarVersionNumber.memory.Data()))
@@ -134,7 +134,7 @@ func StatsSelectLiveRenderV2(protocol *Protocol) {
 	// buildDate := binary.LittleEndian.Uint32(VarBuildDate.memory.Data())
 	// log.Printf("buildDate: %d", buildDate)
 
-	chargeStatus := float64(binary.LittleEndian.Uint16(VarChargeStatus.memory.Data()))
+	chargeStatus := float64(binary.LittleEndian.Uint32(VarChargeStatus.memory.Data()))
 	log.Printf("chargeStatus: %f", chargeStatus)
 
 }
