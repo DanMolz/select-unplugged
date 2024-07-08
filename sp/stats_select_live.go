@@ -52,8 +52,10 @@ func StatsSelectLiveRender(protocol *Protocol) string {
 	// "solar_wh_today": ( vars["ACSolarWhTodayAcc"].get_value(self.scales) + 0 - vars["Shunt1WhTodayAcc"].get_value(self.scales)) / 1000,
 	// "solar_wh_total": (vars["ACSolarWhTotalAcc"].get_value(self.scales) + (0 -vars["Shunt1WhTotalAcc"].get_value(self.scales))) / 1000,
 	// "solarinverter_w": vars["CombinedKacoAcPowerHiRes"].get_value(self.scales),
+
 	bytes := VarBatterySoc.Memory().Data()
 	batterySoc := (float64(bytes[0]) + float64(bytes[1])*256) / MAGIC_RATIO_DIVISOR
+
 	// TODO: shift at least the integer conversion up to variable somehow
 	CommonScaleForDcVolts := float64(binary.LittleEndian.Uint16(VarCommonScaleForDcVolts.memory.Data()))
 	CommonScaleForDcCurrent := float64(binary.LittleEndian.Uint16(VarCommonScaleForDcCurrent.memory.Data()))
@@ -68,9 +70,12 @@ func StatsSelectLiveRender(protocol *Protocol) string {
 	loadAcPower := float64(binary.LittleEndian.Uint32(VarLoadAcPower.Memory().Data()))
 	log.Debugf("AC Load Power: %f", loadAcPower)
 
-	//TechnicalData
+	log.Debugf("LedStatus: %v", LedStatus.Memory().Data())
+	log.Debugf("CommonParameters: %v", CommonParameters.Memory().Data())
+	log.Debugf("ServiceRequired: %v", ServiceRequired.Memory().Data())
 	log.Debugf("TechnicalData: %v", TechnicalData.Memory().Data())
-
+	log.Debugf("SystemSchedulerConfigSettings: %v", SystemSchedulerConfigSettings.Memory().Data())
+	log.Debugf("TechnicalDataTab: %v", TechnicalDataTab.Memory().Data())
 
 	return fmt.Sprintf(
 		"Battery in kWh today: %f\nBattery SoC %%: %f\n",
