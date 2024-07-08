@@ -29,7 +29,7 @@ func init() {
 	loginCmd.Flags().StringVar(
 		&loginPassword,
 		"password",
-		"Selectronic SP Pro",
+		"Selectronic SP PRO",
 		"Password to login with",
 	)
 }
