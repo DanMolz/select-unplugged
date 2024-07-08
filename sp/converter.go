@@ -66,3 +66,7 @@ func ConvertShunt(raw int, scales Scales) string {
 	}
 	return "Error"
 }
+
+func ConvertTime(raw int, scales Scales) string {
+	return "TODO"
+}

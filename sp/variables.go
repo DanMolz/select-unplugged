@@ -44,3 +44,6 @@ var VarCommonScaleForInternalVoltages = NewVariable(NewArea(41005, 1))
 // TESTING
 var VarACLoadkWhTotalAcc = NewVariable(NewArea(41519, 2))
 var VarLoadAcPower = NewVariable(NewArea(41107, 2))
+
+//uint
+var VarInverterTime = NewVariable(NewArea(1900544, 7))

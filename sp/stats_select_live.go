@@ -26,6 +26,7 @@ func StatsSelectLiveRender(protocol *Protocol) string {
 		&VarCommonScaleForDcCurrent,
 		&VarACLoadkWhTotalAcc,
 		&VarLoadAcPower,
+		&VarInverterTime,
 	}
 
 	log.Debugf("Querying variables: %v", variables)
@@ -66,6 +67,9 @@ func StatsSelectLiveRender(protocol *Protocol) string {
 
 	loadAcPower := float64(binary.LittleEndian.Uint32(VarLoadAcPower.Memory().Data()))
 	log.Debugf("AC Load Power: %f", loadAcPower)
+
+	inverterTime := binary.LittleEndian.Uint64(VarInverterTime.Memory().Data())
+	log.Debugf("Inverter Time: %d", inverterTime)
 
 	return fmt.Sprintf(
 		"Battery in kWh today: %f\nBattery SoC %%: %f\n",
