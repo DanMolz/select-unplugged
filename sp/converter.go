@@ -67,6 +67,6 @@ func ConvertShunt(raw int, scales Scales) string {
 	return "Error"
 }
 
-func convert2UShortsInto1Uint(data Data) uint16 {
-	return uint16(data[0]) | uint16(data[1])<<16
+func convert2UShortsInto1Uint(data Data) uint32 {
+	return uint32(data[0]) | uint32(data[1]) << 16
 }
