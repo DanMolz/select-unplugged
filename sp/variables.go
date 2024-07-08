@@ -41,9 +41,6 @@ var VarCommonScaleForDcCurrent = NewVariable(NewArea(41003, 1))
 var VarCommonScaleForTemperature = NewVariable(NewArea(41004, 1))
 var VarCommonScaleForInternalVoltages = NewVariable(NewArea(41005, 1))
 
-
 // TESTING
-// uint, AC Lifetime Solar Energy
-var VarTotalKacokWhTotalAcc = NewVariable(NewArea(41519, 2))
-
+var VarACLoadkWhTotalAcc = NewVariable(NewArea(41519, 2))
 var VarLoadAcPower = NewVariable(NewArea(41107, 2))

@@ -24,7 +24,7 @@ func StatsSelectLiveRender(protocol *Protocol) string {
 		&VarBatterySoc,
 		&VarCommonScaleForDcVolts,
 		&VarCommonScaleForDcCurrent,
-		&VarTotalKacokWhTotalAcc,
+		&VarACLoadkWhTotalAcc,
 		&VarLoadAcPower,
 	}
 
@@ -61,8 +61,11 @@ func StatsSelectLiveRender(protocol *Protocol) string {
 	log.Debugf("CommonScaleForDcCurrent: %f", CommonScaleForDcCurrent)
 
 	// Testing
-	log.Debugf("AC Lifetime Solar Energy: %d", VarTotalKacokWhTotalAcc)
-	log.Debugf("AC Load Power: %d", VarLoadAcPower)
+	acLoadkWhTotalAcc := float64(binary.LittleEndian.Uint32(VarACLoadkWhTotalAcc.Memory().Data()))
+	log.Debugf("AC Lifetime Solar Energy: %d", acLoadkWhTotalAcc)
+
+	loadAcPower := float64(binary.LittleEndian.Uint32(VarLoadAcPower.Memory().Data()))
+	log.Debugf("AC Load Power: %d", loadAcPower)
 
 	return fmt.Sprintf(
 		"Battery in kWh today: %f\nBattery SoC %%: %f\n",
