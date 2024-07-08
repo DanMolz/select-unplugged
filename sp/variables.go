@@ -45,8 +45,7 @@ var VarCommonScaleForInternalVoltages = NewVariable(NewArea(41005, 1))
 var VarACLoadkWhTotalAcc = NewVariable(NewArea(41519, 2))
 var VarLoadAcPower = NewVariable(NewArea(41107, 2))
 
-// this.c.submitRequest(41912, 50, parSelectronicConnectionInfo, "TechnicalData", 1, parGatewayId);
-var TechnicalData = NewVariable(NewArea(41912, 50))
 
-//this.c.submitRequest(40981, 182, parSelectronicConnectionInfo, "TechnicalDataTab", 0, parGatewayId);
-var TechnicalDataTab = NewVariable(NewArea(40981, 182))
+// 40981, 182, parSelectronicConnectionInfo, "TechnicalDataTab"
+var VarDCVolts = NewVariable(NewArea(41006, 1)) // 25
+var VarDCBatteryPower = NewVariable(NewArea(41007, 2)) // 26
