@@ -1,6 +1,8 @@
 package sp
 
 import (
+	"log"
+
 	"github.com/tarm/serial"
 )
 
@@ -13,6 +15,7 @@ type ConnectionSerial struct {
 var _ Connection = (*ConnectionSerial)(nil)
 
 func NewConnectionSerial(port string) ConnectionSerial {
+	log.Printf("Opening serial port %s", port)
 	return ConnectionSerial{
 		portName: port,
 	}
