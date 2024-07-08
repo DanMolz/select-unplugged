@@ -88,7 +88,7 @@ func StatsSelectLiveRenderV2(protocol *Protocol) {
 		&VarDCBatteryPower,
 		&VarVersionNumber,
 		&VarGridSoftwareVersion,
-		&VarBuildDate,
+		// &VarBuildDate,
 		&VarChargeStatus,
 	}
 
@@ -105,6 +105,8 @@ func StatsSelectLiveRenderV2(protocol *Protocol) {
 
 	batterySocbytes := VarBatterySoc.Memory().Data()
 	batterySoc := (float64(batterySocbytes[0]) + float64(batterySocbytes[1])*256) / MAGIC_RATIO_DIVISOR
+	log.Printf("batterySocbytes[0]: %v", float64(batterySocbytes[0]))
+	log.Printf("batterySocbytes[1]: %v", float64(batterySocbytes[1]))
 	log.Printf("batterySoc: %f", batterySoc)
 
 	batteryEnergyInToday := float64(binary.LittleEndian.Uint32(VarBatteryEnergyInToday.Memory().Data())) * MAGIC_WH_MULTIPLIER * CommonScaleForDcVolts * CommonScaleForDcCurrent / MAGIC_WH_DIVISOR

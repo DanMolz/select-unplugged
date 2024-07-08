@@ -51,6 +51,28 @@ var VarDCVolts = NewVariable(NewArea(41006, 1))
 var VarDCBatteryPower = NewVariable(NewArea(41007, 2))
 var VarVersionNumber = NewVariable(NewArea(41010, 1))
 var VarGridSoftwareVersion = NewVariable(NewArea(41014, 1))
-var VarBuildDate = NewVariable(NewArea(41011, 2))
+// var VarBuildDate = NewVariable(NewArea(41011, 2))
 
-var VarChargeStatus = NewVariable(NewArea(41029, 1))
+var VarChargeStatus = NewVariable(NewArea(41029, 2))
+
+
+/*
+TYPES = {
+    "ushort": {
+        FORMAT: "<H",
+        WORDS: 1,
+    },
+    "short": {
+        FORMAT: "<h",
+        WORDS: 1,
+    },
+    "uint": {
+        FORMAT: "<I",
+        WORDS: 2,
+    },
+    "int": {
+        FORMAT: "<i",
+        WORDS: 2,
+    },
+}
+*/
