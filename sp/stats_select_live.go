@@ -115,8 +115,8 @@ func StatsSelectLiveRenderV2(protocol *Protocol) {
 	dcVolts := float64(binary.LittleEndian.Uint16(VarDCVolts.memory.Data()))
 	log.Debugf("dcVolts: %f", dcVolts)
 
-	dcBatteryPowerbytes := VarDCBatteryPower.Memory().Data()
-	dcBatteryPower := convert2UShortsInto1Uint(dcBatteryPowerbytes)
-	log.Debugf("dcBatteryPower: %d", dcBatteryPower)
+	dcBatteryPowerbytes := convert2UShortsInto1Uint(VarDCBatteryPower.Memory().Data())
+	dcBatteryPower := float32(dcBatteryPowerbytes) * -1.0 * float32(CommonScaleForDcVolts) * float32(CommonScaleForDcCurrent) / 3276800.0
+	log.Debugf("dcBatteryPower: %f", dcBatteryPower)
 
 }
