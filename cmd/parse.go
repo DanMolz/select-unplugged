@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/hex"
 	"fmt"
+	"log"
 	"regexp"
 
 	"github.com/neerolyte/select-unplugged/sp"

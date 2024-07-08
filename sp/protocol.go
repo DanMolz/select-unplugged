@@ -57,19 +57,19 @@ func (protocol *Protocol) Query(variables []*Variable) error {
 	memories := []Memory{}
 	for i := 0; i < len(areas); i++ {
 		area := areas[i]
-		log.Printf("Querying area %s", area)
+		log.Debugf("Querying area %s", area)
 		requestQuery := NewRequestQuery(area)
-		log.Printf("Request: %s", requestQuery)
+		log.Debugf("Request: %s", requestQuery)
 		response, err := protocol.Send(requestQuery)
 		if err != nil {
 			return err
 		}
-		log.Printf("Response: %s", response.Message())
+		log.Debugf("Response: %s", response.Message())
 		data, err := response.Message().Data()
 		if err != nil {
 			return err
 		}
-		log.Printf("Data: %s", data)
+		log.Debugf("Data: %s", data)
 		memory := NewMemory(area)
 		memory.SetData(*data)
 		memories = append(memories, memory)

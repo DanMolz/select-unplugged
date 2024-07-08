@@ -4,6 +4,8 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type MessageType string
@@ -19,15 +21,26 @@ func (m Message) String() string {
 }
 
 func (m Message) Describe() string {
+	log.Debugf("Describing message %s", m)
+
 	messageType, err := m.Type()
 	if err != nil {
 		panic(err)
 	}
+	log.Debugf("Message type is %s", *messageType)
+
 	messageAddress, err := m.Address()
 	if err != nil {
 		panic(err)
 	}
+	log.Debugf("Message address is %s", *messageAddress)
+
 	messageData, err := m.Data()
+	if err != nil {
+		panic(err)
+	}
+	log.Debugf("Message data is %s", *messageData)
+	
 	dataDescription := ""
 	if messageData != nil {
 		dataDescription = fmt.Sprintf("=0x%x", *messageData)
