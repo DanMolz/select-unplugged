@@ -47,5 +47,5 @@ func init() {
 
 	rootCmd.Version = "0.0.0"
 	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "verbose output")
-	rootCmd.PersistentFlags().StringVarP(&SerialPort, "port", "", "/dev/ttyUSB0", "serial port")
+	rootCmd.PersistentFlags().StringVarP(&SerialPort, "port", "", "/dev/ttyACM0", "serial port")
 }
