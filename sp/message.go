@@ -33,14 +33,13 @@ func (m Message) Describe() string {
 	if err != nil {
 		panic(err)
 	}
-	log.Debugf("Message address is %s", *messageAddress)
+	log.Debugf("Message address is %d", *messageAddress)
 
 	messageData, err := m.Data()
 	if err != nil {
 		panic(err)
 	}
-	log.Debugf("Message data is %s", *messageData)
-	
+
 	dataDescription := ""
 	if messageData != nil {
 		dataDescription = fmt.Sprintf("=0x%x", *messageData)
@@ -73,6 +72,8 @@ func (m Message) Data() (*[]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	log.Debugf("Words: %d", *words)
+	
 	last := 8 + (*words * 2)
 	if len(m) < last {
 		return nil, errors.New("Need more bytes to return data")
