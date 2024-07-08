@@ -30,10 +30,6 @@ var VarBatteryEnergyInToday = NewVariable(NewArea(41135, 2))
 // uint, how much energy has gone in to the battery total
 var VarBatteryEnergyInTotal = NewVariable(NewArea(41354, 2))
 
-
-// uint, AC Lifetime Solar Energy
-var VarTotalKacokWhTotalAcc = NewVariable(NewArea(41519, 2))
-
 // ushort, percent, battery state of charge
 var VarBatterySoc = NewVariable(NewArea(41089, 1))
 
@@ -44,3 +40,10 @@ var VarCommonScaleForDcVolts = NewVariable(NewArea(41002, 1))
 var VarCommonScaleForDcCurrent = NewVariable(NewArea(41003, 1))
 var VarCommonScaleForTemperature = NewVariable(NewArea(41004, 1))
 var VarCommonScaleForInternalVoltages = NewVariable(NewArea(41005, 1))
+
+
+// TESTING
+// uint, AC Lifetime Solar Energy
+var VarTotalKacokWhTotalAcc = NewVariable(NewArea(41519, 2))
+
+var VarLoadAcPower = NewVariable(NewArea(41107, 2))
