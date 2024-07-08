@@ -57,9 +57,7 @@ func (protocol *Protocol) Query(variables []*Variable) error {
 	memories := []Memory{}
 	for i := 0; i < len(areas); i++ {
 		area := areas[i]
-		log.Debugf("Querying area %s", area)
 		requestQuery := NewRequestQuery(area)
-		log.Debugf("Request: %s", requestQuery)
 		response, err := protocol.Send(requestQuery)
 		if err != nil {
 			return err
@@ -102,22 +100,16 @@ func (protocol *Protocol) Login(password string) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("Login hash: %s", VarLoginHash.Memory().Data())
-
 	responseHash := CalculateLoginHash(password, VarLoginHash.Memory().Data())
 	VarLoginHash.memory.SetData(responseHash)
 	err = protocol.WriteOne(VarLoginHash)
 	if err != nil {
 		return err
 	}
-	log.Printf("Login hash response: %s", responseHash)
-
 	err = protocol.QueryOne(&VarLoginStatus)
 	if err != nil {
 		return err
 	}
-	log.Printf("Login status: %s", VarLoginStatus.Memory().Data())
-
 	if !bytes.Equal(VarLoginStatus.Memory().Data(), []byte("\x01\x00")) {
 		return errors.New("Invalid login status")
 	}
