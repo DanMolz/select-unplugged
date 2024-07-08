@@ -60,7 +60,7 @@ func StatsSelectLiveRender(protocol *Protocol) string {
 	log.Debugf("CommonScaleForDcCurrent: %f", CommonScaleForDcCurrent)
 
 	// Testing - AC Lifetime Solar Energy
-	log.Debugf("AC Lifetime Solar Energy: %f", VarTotalKacokWhTotalAcc)
+	log.Debugf("AC Lifetime Solar Energy: %d", VarTotalKacokWhTotalAcc)
 
 	return fmt.Sprintf(
 		"Battery in kWh today: %f\nBattery SoC %%: %f\n",
