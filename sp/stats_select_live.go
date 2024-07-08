@@ -131,8 +131,8 @@ func StatsSelectLiveRenderV2(protocol *Protocol) {
 	gridSoftwareVersion := float64(binary.LittleEndian.Uint16(VarGridSoftwareVersion.memory.Data()))
 	log.Printf("gridSoftwareVersion: %f", gridSoftwareVersion)
 
-	buildDate := binary.LittleEndian.Uint32(VarBuildDate.memory.Data())
-	log.Printf("buildDate: %d", buildDate)
+	// buildDate := binary.LittleEndian.Uint32(VarBuildDate.memory.Data())
+	// log.Printf("buildDate: %d", buildDate)
 
 	chargeStatus := float64(binary.LittleEndian.Uint16(VarChargeStatus.memory.Data()))
 	log.Printf("chargeStatus: %f", chargeStatus)
