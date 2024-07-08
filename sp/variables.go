@@ -47,5 +47,10 @@ var VarLoadAcPower = NewVariable(NewArea(41107, 2))
 
 
 // 40981, 182, parSelectronicConnectionInfo, "TechnicalDataTab"
-var VarDCVolts = NewVariable(NewArea(41006, 1)) // 25
-var VarDCBatteryPower = NewVariable(NewArea(41007, 2)) // 26
+var VarDCVolts = NewVariable(NewArea(41006, 1))
+var VarDCBatteryPower = NewVariable(NewArea(41007, 2))
+var VarVersionNumber = NewVariable(NewArea(41010, 1))
+var VarGridSoftwareVersion = NewVariable(NewArea(41014, 1))
+var VarBuildDate = NewVariable(NewArea(41011, 2))
+
+var VarChargeStatus = NewVariable(NewArea(41029, 1))

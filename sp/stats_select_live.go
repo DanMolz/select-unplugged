@@ -86,6 +86,10 @@ func StatsSelectLiveRenderV2(protocol *Protocol) {
 		&VarLoadAcPower,
 		&VarDCVolts,
 		&VarDCBatteryPower,
+		&VarVersionNumber,
+		&VarGridSoftwareVersion,
+		&VarBuildDate,
+		&VarChargeStatus,
 	}
 
 	log.Printf("Querying variables: %v", variables)
@@ -118,5 +122,17 @@ func StatsSelectLiveRenderV2(protocol *Protocol) {
 	dcBatteryPowerbytes := convert2UShortsInto1Uint(VarDCBatteryPower.Memory().Data())
 	dcBatteryPower := float32(dcBatteryPowerbytes) * -1.0 * float32(CommonScaleForDcVolts) * float32(CommonScaleForDcCurrent) / 3276800.0
 	log.Printf("dcBatteryPower: %f", dcBatteryPower)
+
+	versionNumber := float64(binary.LittleEndian.Uint16(VarVersionNumber.memory.Data()))
+	log.Printf("versionNumber: %f", versionNumber)
+
+	gridSoftwareVersion := float64(binary.LittleEndian.Uint16(VarGridSoftwareVersion.memory.Data()))
+	log.Printf("gridSoftwareVersion: %f", gridSoftwareVersion)
+
+	buildDate := binary.LittleEndian.Uint32(VarBuildDate.memory.Data())
+	log.Printf("buildDate: %d", buildDate)
+
+	chargeStatus := float64(binary.LittleEndian.Uint16(VarChargeStatus.memory.Data()))
+	log.Printf("chargeStatus: %f", chargeStatus)
 
 }
