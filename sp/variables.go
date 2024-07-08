@@ -55,6 +55,9 @@ var VarGridSoftwareVersion = NewVariable(NewArea(41014, 1))
 
 var VarChargeStatus = NewVariable(NewArea(41029, 2))
 
+var VarInverterRunHrsTotalAcc1 = NewVariable(NewArea(41023, 2))
+var VarInverterRunHrsTotalAcc2 = NewVariable(NewArea(41024, 1))
+
 
 /*
 TYPES = {

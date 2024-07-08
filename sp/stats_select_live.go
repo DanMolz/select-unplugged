@@ -90,6 +90,8 @@ func StatsSelectLiveRenderV2(protocol *Protocol) {
 		&VarGridSoftwareVersion,
 		// &VarBuildDate,
 		&VarChargeStatus,
+		&VarInverterRunHrsTotalAcc1,
+		&VarInverterRunHrsTotalAcc2,
 	}
 
 	log.Printf("Querying variables: %v", variables)
@@ -104,9 +106,10 @@ func StatsSelectLiveRenderV2(protocol *Protocol) {
 	log.Printf("CommonScaleForDcCurrent: %f", CommonScaleForDcCurrent)
 
 	batterySocbytes := VarBatterySoc.Memory().Data()
+	for i, v := range batterySocbytes {
+		fmt.Printf("Index %d: %d\n", i, v)
+	}
 	batterySoc := (float64(batterySocbytes[0]) + float64(batterySocbytes[1])*256) / MAGIC_RATIO_DIVISOR
-	log.Printf("batterySocbytes[0]: %v", float64(batterySocbytes[0]))
-	log.Printf("batterySocbytes[1]: %v", float64(batterySocbytes[1]))
 	log.Printf("batterySoc: %f", batterySoc)
 
 	batteryEnergyInToday := float64(binary.LittleEndian.Uint32(VarBatteryEnergyInToday.Memory().Data())) * MAGIC_WH_MULTIPLIER * CommonScaleForDcVolts * CommonScaleForDcCurrent / MAGIC_WH_DIVISOR
@@ -137,4 +140,13 @@ func StatsSelectLiveRenderV2(protocol *Protocol) {
 	chargeStatus := float64(binary.LittleEndian.Uint32(VarChargeStatus.memory.Data()))
 	log.Printf("chargeStatus: %f", chargeStatus)
 
+	inverterRunHrsTotalAcc1 := VarInverterRunHrsTotalAcc1.Memory().Data()
+	for i, v := range inverterRunHrsTotalAcc1 {
+		fmt.Printf("Index 1 %d: %d\n", i, v)
+	}
+
+	inverterRunHrsTotalAcc2 := VarInverterRunHrsTotalAcc2.Memory().Data()
+	for i, v := range inverterRunHrsTotalAcc2 {
+		fmt.Printf("Index 2 %d: %d\n", i, v)
+	}
 }
