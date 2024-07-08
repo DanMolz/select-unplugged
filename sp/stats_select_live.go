@@ -85,6 +85,7 @@ func StatsSelectLiveRenderV2(protocol *Protocol) {
 		&VarACLoadkWhTotalAcc,
 		&VarLoadAcPower,
 		&TechnicalData,
+		&TechnicalDataTab,
 	}
 
 	log.Debugf("Querying variables: %v", variables)
@@ -116,5 +117,11 @@ func StatsSelectLiveRenderV2(protocol *Protocol) {
 	log.Debugf("TechnicalDataBytes: %v", TechnicalDataBytes)
 	TechnicalData := string(TechnicalDataBytes)
 	log.Debugf("TechnicalData: %v", TechnicalData)
+
+	// Testing TechnicalDataTab
+	TechnicalDataTabBytes := TechnicalDataTab.Memory().Data()
+	log.Debugf("TechnicalDataTabBytes: %v", TechnicalDataTabBytes)
+	TechnicalDataTab := string(TechnicalDataTabBytes)
+	log.Debugf("TechnicalDataTab: %v", TechnicalDataTab)
 
 }
