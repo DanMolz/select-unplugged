@@ -3,6 +3,7 @@ package sp
 import (
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/tarm/serial"
 )
 
@@ -30,6 +31,7 @@ func (c *ConnectionSerial) Open() error {
 		StopBits:    1,
 	}
 
+	log.Debugf("Opening serial port %s", c.portName)
 	serial, err := serial.OpenPort(config)
 	if err != nil {
 		return err
