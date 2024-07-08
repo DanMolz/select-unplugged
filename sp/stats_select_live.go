@@ -88,35 +88,35 @@ func StatsSelectLiveRenderV2(protocol *Protocol) {
 		&VarDCBatteryPower,
 	}
 
-	log.Debugf("Querying variables: %v", variables)
+	log.Printf("Querying variables: %v", variables)
 	protocol.Query(variables)
 
 	// Testing outputs
 
 	CommonScaleForDcVolts := float64(binary.LittleEndian.Uint16(VarCommonScaleForDcVolts.memory.Data()))
-	log.Debugf("CommonScaleForDcVolts: %f", CommonScaleForDcVolts)
+	log.Printf("CommonScaleForDcVolts: %f", CommonScaleForDcVolts)
 
 	CommonScaleForDcCurrent := float64(binary.LittleEndian.Uint16(VarCommonScaleForDcCurrent.memory.Data()))
-	log.Debugf("CommonScaleForDcCurrent: %f", CommonScaleForDcCurrent)
+	log.Printf("CommonScaleForDcCurrent: %f", CommonScaleForDcCurrent)
 
 	batterySocbytes := VarBatterySoc.Memory().Data()
 	batterySoc := (float64(batterySocbytes[0]) + float64(batterySocbytes[1])*256) / MAGIC_RATIO_DIVISOR
-	log.Debugf("batterySoc: %f", batterySoc)
+	log.Printf("batterySoc: %f", batterySoc)
 
 	batteryEnergyInToday := float64(binary.LittleEndian.Uint32(VarBatteryEnergyInToday.Memory().Data())) * MAGIC_WH_MULTIPLIER * CommonScaleForDcVolts * CommonScaleForDcCurrent / MAGIC_WH_DIVISOR
-	log.Debugf("batteryEnergyInToday: %f", batteryEnergyInToday)
+	log.Printf("batteryEnergyInToday: %f", batteryEnergyInToday)
 
 	acLoadkWhTotalAcc := float64(binary.LittleEndian.Uint32(VarACLoadkWhTotalAcc.Memory().Data()))
-	log.Debugf("acLoadkWhTotalAcc: %f", acLoadkWhTotalAcc)
+	log.Printf("acLoadkWhTotalAcc: %f", acLoadkWhTotalAcc)
 
 	loadAcPower := float64(binary.LittleEndian.Uint32(VarLoadAcPower.Memory().Data()))
-	log.Debugf("loadAcPower: %f", loadAcPower)
+	log.Printf("loadAcPower: %f", loadAcPower)
 
 	dcVolts := float64(binary.LittleEndian.Uint16(VarDCVolts.memory.Data()))
-	log.Debugf("dcVolts: %f", dcVolts)
+	log.Printf("dcVolts: %f", dcVolts)
 
 	dcBatteryPowerbytes := convert2UShortsInto1Uint(VarDCBatteryPower.Memory().Data())
 	dcBatteryPower := float32(dcBatteryPowerbytes) * -1.0 * float32(CommonScaleForDcVolts) * float32(CommonScaleForDcCurrent) / 3276800.0
-	log.Debugf("dcBatteryPower: %f", dcBatteryPower)
+	log.Printf("dcBatteryPower: %f", dcBatteryPower)
 
 }
