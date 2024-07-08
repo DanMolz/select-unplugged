@@ -24,8 +24,6 @@ func StatsSelectLiveRender(protocol *Protocol) string {
 		&VarBatterySoc,
 		&VarCommonScaleForDcVolts,
 		&VarCommonScaleForDcCurrent,
-		&VarACLoadkWhTotalAcc,
-		&VarLoadAcPower,
 	}
 
 	log.Debugf("Querying variables: %v", variables)
@@ -62,12 +60,6 @@ func StatsSelectLiveRender(protocol *Protocol) string {
 	log.Debugf("CommonScaleForDcVolts: %f", CommonScaleForDcVolts)
 	log.Debugf("CommonScaleForDcCurrent: %f", CommonScaleForDcCurrent)
 
-	// Testing
-	acLoadkWhTotalAcc := float64(binary.LittleEndian.Uint32(VarACLoadkWhTotalAcc.Memory().Data()))
-	log.Debugf("AC Lifetime Solar Energy: %f", acLoadkWhTotalAcc)
-	loadAcPower := float64(binary.LittleEndian.Uint32(VarLoadAcPower.Memory().Data()))
-	log.Debugf("AC Load Power: %f", loadAcPower)
-
 	return fmt.Sprintf(
 		"Battery in kWh today: %f\nBattery SoC %%: %f\n",
 		batteryEnergyInToday/1000,
@@ -82,6 +74,8 @@ func StatsSelectLiveRenderV2(protocol *Protocol) {
 		&VarBatterySoc,
 		&VarCommonScaleForDcVolts,
 		&VarCommonScaleForDcCurrent,
+		&VarCommonScaleForAcCurrent,
+		&VarCommonScaleForAcVolts,
 		&VarACLoadkWhTotalAcc,
 		&VarLoadAcPower,
 		&VarDCVolts,
@@ -93,19 +87,23 @@ func StatsSelectLiveRenderV2(protocol *Protocol) {
 		&VarChargeStatus,
 		&VarInverterRunHrsTotalAcc1,
 		&VarInverterRunHrsTotalAcc2,
+		&VarLoadAcPower1,
+		&VarLoadAcPower2,
 	}
 
 	log.Printf("Querying variables: %v", variables)
 	protocol.Query(variables)
 
 	CommonScaleForDcVolts := float64(binary.LittleEndian.Uint16(VarCommonScaleForDcVolts.memory.Data()))
-	log.Printf("CommonScaleForDcVolts: %f", CommonScaleForDcVolts)
 	CommonScaleForDcCurrent := float64(binary.LittleEndian.Uint16(VarCommonScaleForDcCurrent.memory.Data()))
+	CommonScaleForAcCurrent := float64(binary.LittleEndian.Uint16(VarCommonScaleForAcCurrent.memory.Data()))
+	CommonScaleForAcVolts := float64(binary.LittleEndian.Uint16(VarCommonScaleForAcVolts.memory.Data()))
+	log.Printf("CommonScaleForDcVolts: %f", CommonScaleForDcVolts)
 	log.Printf("CommonScaleForDcCurrent: %f", CommonScaleForDcCurrent)
 
 	batterySocbytes := VarBatterySoc.Memory().Data()
 	batterySoc := (float64(batterySocbytes[0]) + float64(batterySocbytes[1])*256) / MAGIC_RATIO_DIVISOR
-	log.Printf("batterySoc: %f", batterySoc)
+	log.Printf("batterySoc: %f", batterySoc*100)
 
 	batteryEnergyInToday := float64(binary.LittleEndian.Uint32(VarBatteryEnergyInToday.Memory().Data())) * MAGIC_WH_MULTIPLIER * CommonScaleForDcVolts * CommonScaleForDcCurrent / MAGIC_WH_DIVISOR
 	log.Printf("batteryEnergyInToday: %f", batteryEnergyInToday/1000)
@@ -116,6 +114,9 @@ func StatsSelectLiveRenderV2(protocol *Protocol) {
 
 	loadAcPower := float64(binary.LittleEndian.Uint32(VarLoadAcPower.Memory().Data()))
 	log.Printf("loadAcPower: %f", loadAcPower)
+	loadAcPowerbytes := float64(convert2UShortsInto1Uint(uint16(binary.LittleEndian.Uint16(VarLoadAcPower1.memory.Data())),uint16(binary.LittleEndian.Uint16(VarLoadAcPower2.memory.Data())))) * CommonScaleForAcVolts * CommonScaleForAcCurrent / 2.62144E7
+	log.Printf("loadAcPowerbytes: %f", float64(loadAcPowerbytes))
+
 
 	dcVolts := float64(binary.LittleEndian.Uint16(VarDCVolts.memory.Data())) * CommonScaleForDcVolts / MAGIC_DC_V_DIVISOR
 	log.Printf("dcVolts: %f", dcVolts)

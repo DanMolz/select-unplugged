@@ -42,9 +42,10 @@ var VarCommonScaleForTemperature = NewVariable(NewArea(41004, 1))
 var VarCommonScaleForInternalVoltages = NewVariable(NewArea(41005, 1))
 
 // TESTING
-var VarACLoadkWhTotalAcc = NewVariable(NewArea(41519, 2))
-var VarLoadAcPower = NewVariable(NewArea(41107, 2))
-
+var VarACLoadkWhTotalAcc = NewVariable(NewArea(41519, 2)) // uint
+var VarLoadAcPower = NewVariable(NewArea(41107, 2)) //uint
+var VarLoadAcPower1 = NewVariable(NewArea(41107, 1)) //ushort
+var VarLoadAcPower2 = NewVariable(NewArea(41108, 1)) //ushort
 
 // 40981, 182, parSelectronicConnectionInfo, "TechnicalDataTab"
 var VarDCVolts = NewVariable(NewArea(41006, 1))
