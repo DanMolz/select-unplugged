@@ -19,6 +19,7 @@ const MAGIC_RATIO_DIVISOR = 25600.0
 
 func StatsSelectLiveRender(protocol *Protocol) string {
 	variables := []*Variable{
+		&VarTotalKacokWhTotalAcc,
 		&VarBatteryEnergyInToday,
 		&VarBatteryEnergyInTotal,
 		&VarBatterySoc,
@@ -57,6 +58,9 @@ func StatsSelectLiveRender(protocol *Protocol) string {
 
 	log.Debugf("CommonScaleForDcVolts: %f", CommonScaleForDcVolts)
 	log.Debugf("CommonScaleForDcCurrent: %f", CommonScaleForDcCurrent)
+
+	// Testing - AC Lifetime Solar Energy
+	log.Debugf("AC Lifetime Solar Energy: %f", VarTotalKacokWhTotalAcc)
 
 	return fmt.Sprintf(
 		"Battery in kWh today: %f\nBattery SoC %%: %f\n",

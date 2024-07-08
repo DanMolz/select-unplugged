@@ -30,6 +30,10 @@ var VarBatteryEnergyInToday = NewVariable(NewArea(41135, 2))
 // uint, how much energy has gone in to the battery total
 var VarBatteryEnergyInTotal = NewVariable(NewArea(41354, 2))
 
+
+// uint, AC Lifetime Solar Energy
+var VarTotalKacokWhTotalAcc = NewVariable(NewArea(41519, 2))
+
 // ushort, percent, battery state of charge
 var VarBatterySoc = NewVariable(NewArea(41089, 1))
 
