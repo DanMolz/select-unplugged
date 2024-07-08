@@ -85,7 +85,8 @@ func StatsSelectLiveRenderV2(protocol *Protocol) {
 		&VarACLoadkWhTotalAcc,
 		&VarLoadAcPower,
 		&VarDCVolts,
-		&VarDCBatteryPower,
+		&VarDCBatteryPower1,
+		&VarDCBatteryPower2,
 		&VarVersionNumber,
 		&VarGridSoftwareVersion,
 		// &VarBuildDate,
@@ -97,11 +98,8 @@ func StatsSelectLiveRenderV2(protocol *Protocol) {
 	log.Printf("Querying variables: %v", variables)
 	protocol.Query(variables)
 
-	// Testing outputs
-
 	CommonScaleForDcVolts := float64(binary.LittleEndian.Uint16(VarCommonScaleForDcVolts.memory.Data()))
 	log.Printf("CommonScaleForDcVolts: %f", CommonScaleForDcVolts)
-
 	CommonScaleForDcCurrent := float64(binary.LittleEndian.Uint16(VarCommonScaleForDcCurrent.memory.Data()))
 	log.Printf("CommonScaleForDcCurrent: %f", CommonScaleForDcCurrent)
 
@@ -110,40 +108,26 @@ func StatsSelectLiveRenderV2(protocol *Protocol) {
 	log.Printf("batterySoc: %f", batterySoc)
 
 	batteryEnergyInToday := float64(binary.LittleEndian.Uint32(VarBatteryEnergyInToday.Memory().Data())) * MAGIC_WH_MULTIPLIER * CommonScaleForDcVolts * CommonScaleForDcCurrent / MAGIC_WH_DIVISOR
-	log.Printf("batteryEnergyInToday: %f", batteryEnergyInToday)
+	log.Printf("batteryEnergyInToday: %f", batteryEnergyInToday/1000)
 
+	// Testing outputs below
 	acLoadkWhTotalAcc := float64(binary.LittleEndian.Uint32(VarACLoadkWhTotalAcc.Memory().Data()))
 	log.Printf("acLoadkWhTotalAcc: %f", acLoadkWhTotalAcc)
 
 	loadAcPower := float64(binary.LittleEndian.Uint32(VarLoadAcPower.Memory().Data()))
 	log.Printf("loadAcPower: %f", loadAcPower)
 
-	dcVolts := float64(binary.LittleEndian.Uint16(VarDCVolts.memory.Data()))
+	dcVolts := float64(binary.LittleEndian.Uint16(VarDCVolts.memory.Data())) * CommonScaleForDcVolts / MAGIC_DC_V_DIVISOR
 	log.Printf("dcVolts: %f", dcVolts)
 
-	dcBatteryPowerbytes := convert2UShortsInto1Uint(VarDCBatteryPower.Memory().Data())
-	dcBatteryPower := float32(dcBatteryPowerbytes) * -1.0 * float32(CommonScaleForDcVolts) * float32(CommonScaleForDcCurrent) / 3276800.0
-	log.Printf("dcBatteryPower: %f", dcBatteryPower)
-
-	versionNumber := float64(binary.LittleEndian.Uint16(VarVersionNumber.memory.Data()))
-	log.Printf("versionNumber: %f", versionNumber)
-
-	gridSoftwareVersion := float64(binary.LittleEndian.Uint16(VarGridSoftwareVersion.memory.Data()))
-	log.Printf("gridSoftwareVersion: %f", gridSoftwareVersion)
-
-	// buildDate := binary.LittleEndian.Uint32(VarBuildDate.memory.Data())
-	// log.Printf("buildDate: %d", buildDate)
+	// dcBatteryPowerbytes := convert2UShortsInto1Uint(VarDCBatteryPower1.Memory().Data(), VarDCBatteryPower2.Memory().Data())
+	// dcBatteryPower := float32(dcBatteryPowerbytes) * -1.0 * float32(CommonScaleForDcVolts) * float32(CommonScaleForDcCurrent) / MAGIC_DC_V_DIVISOR
+	// log.Printf("dcBatteryPower: %f", dcBatteryPower)
 
 	chargeStatus := float64(binary.LittleEndian.Uint16(VarChargeStatus.memory.Data()))
 	log.Printf("chargeStatus: %f", chargeStatus)
 
-	inverterRunHrsTotalAcc1 := VarInverterRunHrsTotalAcc1.Memory().Data()
-	for i, v := range inverterRunHrsTotalAcc1 {
-		fmt.Printf("Index 1 %d: %d\n", i, v)
-	}
+	inverterRunHrsTotalAcc := convert2UShortsInto1Uint(uint16(binary.LittleEndian.Uint16(VarInverterRunHrsTotalAcc1.memory.Data())), uint16(binary.LittleEndian.Uint16(VarInverterRunHrsTotalAcc2.memory.Data()))) / 60.0
+	log.Printf("inverterRunHrsTotalAcc: %f", float64(inverterRunHrsTotalAcc))
 
-	inverterRunHrsTotalAcc2 := VarInverterRunHrsTotalAcc2.Memory().Data()
-	for i, v := range inverterRunHrsTotalAcc2 {
-		fmt.Printf("Index 2 %d: %d\n", i, v)
-	}
 }
