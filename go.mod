@@ -1,6 +1,6 @@
 module github.com/neerolyte/select-unplugged
 
-go 1.19
+go 1.22.1
 
 require (
 	github.com/spf13/cobra v1.5.0
