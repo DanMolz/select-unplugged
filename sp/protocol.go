@@ -49,6 +49,8 @@ func (protocol *Protocol) Send(request Request) (*Response, error) {
 
 // Query one or more variables
 func (protocol *Protocol) Query(variables []*Variable) error {
+	log.Printf("Querying variables: %v", variables)
+	
 	areas := []Area{}
 	for i := 0; i < len(variables); i++ {
 		areas = append(areas, (variables)[i].Area())

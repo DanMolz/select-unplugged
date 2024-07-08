@@ -26,8 +26,6 @@ func StatsSelectLiveRender(protocol *Protocol) string {
 		&VarCommonScaleForDcCurrent,
 		&VarACLoadkWhTotalAcc,
 		&VarLoadAcPower,
-		&VarInverterTime,
-		&TechnicalData,
 	}
 
 	log.Debugf("Querying variables: %v", variables)
@@ -70,16 +68,46 @@ func StatsSelectLiveRender(protocol *Protocol) string {
 	loadAcPower := float64(binary.LittleEndian.Uint32(VarLoadAcPower.Memory().Data()))
 	log.Debugf("AC Load Power: %f", loadAcPower)
 
-	log.Debugf("LedStatus: %v", LedStatus.Memory().Data())
-	log.Debugf("CommonParameters: %v", CommonParameters.Memory().Data())
-	log.Debugf("ServiceRequired: %v", ServiceRequired.Memory().Data())
-	log.Debugf("TechnicalData: %v", TechnicalData.Memory().Data())
-	log.Debugf("SystemSchedulerConfigSettings: %v", SystemSchedulerConfigSettings.Memory().Data())
-	log.Debugf("TechnicalDataTab: %v", TechnicalDataTab.Memory().Data())
-
 	return fmt.Sprintf(
 		"Battery in kWh today: %f\nBattery SoC %%: %f\n",
 		batteryEnergyInToday/1000,
 		batterySoc*100,
 	)
+}
+
+func StatsSelectLiveRenderV2(protocol *Protocol) {
+	variables := []*Variable{
+		&VarBatteryEnergyInToday,
+		&VarBatteryEnergyInTotal,
+		&VarBatterySoc,
+		&VarCommonScaleForDcVolts,
+		&VarCommonScaleForDcCurrent,
+		&VarACLoadkWhTotalAcc,
+		&VarLoadAcPower,
+	}
+
+	log.Debugf("Querying variables: %v", variables)
+	protocol.Query(variables)
+
+	// Testing outputs
+
+	CommonScaleForDcVolts := float64(binary.LittleEndian.Uint16(VarCommonScaleForDcVolts.memory.Data()))
+	log.Debugf("CommonScaleForDcVolts: %f", CommonScaleForDcVolts)
+
+	CommonScaleForDcCurrent := float64(binary.LittleEndian.Uint16(VarCommonScaleForDcCurrent.memory.Data()))
+	log.Debugf("CommonScaleForDcCurrent: %f", CommonScaleForDcCurrent)
+
+	bytes := VarBatterySoc.Memory().Data()
+	batterySoc := (float64(bytes[0]) + float64(bytes[1])*256) / MAGIC_RATIO_DIVISOR
+	log.Debugf("batterySoc: %f", batterySoc)
+
+	batteryEnergyInToday := float64(binary.LittleEndian.Uint32(VarBatteryEnergyInToday.Memory().Data())) * MAGIC_WH_MULTIPLIER * CommonScaleForDcVolts * CommonScaleForDcCurrent / MAGIC_WH_DIVISOR
+	log.Debugf("batteryEnergyInToday: %f", batteryEnergyInToday)
+
+	acLoadkWhTotalAcc := float64(binary.LittleEndian.Uint32(VarACLoadkWhTotalAcc.Memory().Data()))
+	log.Debugf("acLoadkWhTotalAcc: %f", acLoadkWhTotalAcc)
+
+	loadAcPower := float64(binary.LittleEndian.Uint32(VarLoadAcPower.Memory().Data()))
+	log.Debugf("loadAcPower: %f", loadAcPower)
+
 }

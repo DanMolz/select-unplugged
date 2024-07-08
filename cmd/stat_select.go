@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/neerolyte/select-unplugged/sp"
 	"github.com/spf13/cobra"
 )
@@ -20,7 +18,9 @@ var statSelectCmd = &cobra.Command{
 		if err != nil {
 			panic(err)
 		}
-		fmt.Print(sp.StatsSelectLiveRender(protocol))
+
+		//fmt.Print(sp.StatsSelectLiveRenderV2(protocol))
+		sp.StatsSelectLiveRenderV2(protocol)
 	},
 }
 

@@ -44,14 +44,5 @@ var VarCommonScaleForInternalVoltages = NewVariable(NewArea(41005, 1))
 // TESTING
 var VarACLoadkWhTotalAcc = NewVariable(NewArea(41519, 2))
 var VarLoadAcPower = NewVariable(NewArea(41107, 2))
+var VarACLoadVoltage = NewVariable(NewArea(41010, 182))
 
-//uint
-var VarInverterTime = NewVariable(NewArea(1900544, 7))
-
-// getStatus
-var LedStatus = NewVariable(NewArea(41175, 69))
-var CommonParameters = NewVariable(NewArea(49152, 196))
-var ServiceRequired = NewVariable(NewArea(41533, 75))
-var TechnicalData = NewVariable(NewArea(41912, 50))
-var SystemSchedulerConfigSettings = NewVariable(NewArea(51200, 184))
-var TechnicalDataTab = NewVariable(NewArea(40981, 182))
