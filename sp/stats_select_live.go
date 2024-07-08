@@ -88,7 +88,7 @@ func StatsSelectLiveRenderV2(protocol *Protocol) {
 		&VarDCBatteryPower,
 		&VarVersionNumber,
 		&VarGridSoftwareVersion,
-		&VarBuildDate,
+		// &VarBuildDate,
 		&VarChargeStatus,
 	}
 
