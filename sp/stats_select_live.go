@@ -3,6 +3,7 @@ package sp
 import (
 	"encoding/binary"
 	"fmt"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -69,7 +70,9 @@ func StatsSelectLiveRender(protocol *Protocol) string {
 	log.Debugf("AC Load Power: %f", loadAcPower)
 
 	inverterTime := binary.LittleEndian.Uint64(VarInverterTime.Memory().Data())
-	log.Debugf("Inverter Time: %d", inverterTime)
+	inverterTimeObj := time.Unix(int64(inverterTime), 0)
+	formattedTime := inverterTimeObj.Format("02-01-2006T15:04:05")
+	log.Debugf("Inverter Time: %s", formattedTime)
 
 	return fmt.Sprintf(
 		"Battery in kWh today: %f\nBattery SoC %%: %f\n",
