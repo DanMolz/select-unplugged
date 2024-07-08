@@ -92,11 +92,14 @@ func (protocol *Protocol) WriteOne(variable Variable) error {
 }
 
 func (protocol *Protocol) Login(password string) error {
+	log.Printf("Logging in with password - %s", password)
+
 	// TODO: check the comm port at login to determine if we're already logged in / how to disconnect later
 	err := protocol.QueryOne(&VarLoginHash)
 	if err != nil {
 		return err
 	}
+	log.Printf("Login hash: %s", VarLoginHash.Memory().Data())
 
 	responseHash := CalculateLoginHash(password, VarLoginHash.Memory().Data())
 	VarLoginHash.memory.SetData(responseHash)
@@ -104,11 +107,14 @@ func (protocol *Protocol) Login(password string) error {
 	if err != nil {
 		return err
 	}
+	log.Printf("Login hash response: %s", responseHash)
 
 	err = protocol.QueryOne(&VarLoginStatus)
 	if err != nil {
 		return err
 	}
+	log.Printf("Login status: %s", VarLoginStatus.Memory().Data())
+	
 	if !bytes.Equal(VarLoginStatus.Memory().Data(), []byte("\x01\x00")) {
 		return errors.New("Invalid login status")
 	}

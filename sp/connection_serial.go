@@ -15,7 +15,6 @@ type ConnectionSerial struct {
 var _ Connection = (*ConnectionSerial)(nil)
 
 func NewConnectionSerial(port string) ConnectionSerial {
-	log.Printf("Opening serial port %s", port)
 	return ConnectionSerial{
 		portName: port,
 	}
@@ -27,6 +26,7 @@ func (c *ConnectionSerial) Open() error {
 	if err != nil {
 		return err
 	}
+	log.Println("Opened serial port successfully")
 	c.serial = serial
 	return nil
 }
