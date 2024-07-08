@@ -1,6 +1,8 @@
 package sp
 
 import (
+	"time"
+
 	"github.com/tarm/serial"
 )
 
@@ -19,7 +21,15 @@ func NewConnectionSerial(port string) ConnectionSerial {
 }
 
 func (c *ConnectionSerial) Open() error {
-	config := &serial.Config{Name: c.portName, Baud: 57600}
+	config := &serial.Config{
+		Name:        c.portName,
+		Baud:        57600,
+		ReadTimeout: time.Millisecond * 100,
+		Size:        8,
+		Parity:      0,
+		StopBits:    1,
+	}
+
 	serial, err := serial.OpenPort(config)
 	if err != nil {
 		return err
