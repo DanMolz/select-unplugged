@@ -44,5 +44,7 @@ var VarCommonScaleForInternalVoltages = NewVariable(NewArea(41005, 1))
 // TESTING
 var VarACLoadkWhTotalAcc = NewVariable(NewArea(41519, 2))
 var VarLoadAcPower = NewVariable(NewArea(41107, 2))
-var VarACLoadVoltage = NewVariable(NewArea(41010, 182))
 
+
+//this.c.submitRequest(41912, 50, parSelectronicConnectionInfo, "TechnicalData", 1, parGatewayId);
+var TechnicalData = NewVariable(NewArea(41912, 50))

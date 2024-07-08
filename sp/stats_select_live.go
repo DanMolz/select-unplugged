@@ -84,7 +84,10 @@ func StatsSelectLiveRenderV2(protocol *Protocol) {
 		&VarCommonScaleForDcCurrent,
 		&VarACLoadkWhTotalAcc,
 		&VarLoadAcPower,
+		&TechnicalData,
 	}
+
+	log.Debugf("TechnicalData: %v", TechnicalData)
 
 	log.Debugf("Querying variables: %v", variables)
 	protocol.Query(variables)
