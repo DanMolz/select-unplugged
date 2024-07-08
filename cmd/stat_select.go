@@ -13,14 +13,16 @@ var statSelectCmd = &cobra.Command{
 	Short: "select.live device emulation CLI",
 	Long:  `select.live device emulation CLI`,
 	Run: func(cmd *cobra.Command, args []string) {
+		// protocol := NewConnectedProtocol()
+
 		spConnection := sp.NewConnectionSerial(SerialPort)
 		spConnection.Open()
 		protocol := sp.NewProtocol(&spConnection)
-		err := protocol.Login(statSelectPassword)
+		err := protocol.Login(loginPassword)
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("Login Success")
+		fmt.Printf("Success\n")
 
 		fmt.Print(sp.StatsSelectLiveRender(protocol))
 	},

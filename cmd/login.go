@@ -20,7 +20,7 @@ var loginCmd = &cobra.Command{
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("Success")
+		fmt.Printf("Success\n")
 	},
 }
 

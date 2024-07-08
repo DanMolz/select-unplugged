@@ -72,8 +72,6 @@ func (m Message) Data() (*[]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Debugf("Words: %d", *words)
-	
 	last := 8 + (*words * 2)
 	if len(m) < last {
 		return nil, errors.New("Need more bytes to return data")
