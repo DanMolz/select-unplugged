@@ -112,12 +112,6 @@ func StatsSelectLiveRenderV2(protocol *Protocol) {
 	loadAcPower := float64(binary.LittleEndian.Uint32(VarLoadAcPower.Memory().Data()))
 	log.Debugf("loadAcPower: %f", loadAcPower)
 
-	// Testing TechnicalData
-	TechnicalDataBytes := TechnicalData.Memory().Data()
-	log.Debugf("TechnicalDataBytes: %v", TechnicalDataBytes)
-	TechnicalData := string(TechnicalDataBytes)
-	log.Debugf("TechnicalData: %v", TechnicalData)
-
 	// Testing TechnicalDataTab
 	TechnicalDataTabBytes := TechnicalDataTab.Memory().Data()
 	log.Debugf("TechnicalDataTabBytes: %v", TechnicalDataTabBytes)
