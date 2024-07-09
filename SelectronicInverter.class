@@ -1,0 +1,1538 @@
+package org.openhab.binding.selectronic.internal;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import org.apache.commons.lang.StringUtils;
+import org.openhab.binding.selectronic.SelectronicBindingProvider;
+import org.openhab.binding.selectronic.inverter.SelectronicConfig;
+import org.openhab.binding.selectronic.inverter.SelectronicConnection;
+import org.openhab.binding.selectronic.inverter.SelectronicJob;
+import org.openhab.binding.selectronic.inverter.ServiceMessages;
+import org.openhab.binding.selectronic.inverter.UInt16;
+import org.openhab.binding.selectronic.inverter.UtilSelectronic;
+import org.openhab.binding.settings.ArvioConfigurationStore;
+import org.openhab.core.arvio.automator.Automator;
+import org.openhab.core.arvio.automator.Notify;
+import org.openhab.core.arvio.util.Util;
+import org.openhab.core.events.EventPublisher;
+import org.openhab.core.library.types.DecimalType;
+import org.openhab.core.library.types.OnOffType;
+import org.openhab.core.library.types.StringType;
+import org.openhab.core.types.State;
+import org.openhab.persistence.arvio.PersistenceService3;
+import org.openhab.persistence.arvio.PersistenceService5;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class SelectronicInverter {
+  private static Logger a = LoggerFactory.getLogger(SelectronicInverter.class);
+
+  private ConnectorStatusEnum b;
+
+  private SelectronicConnection c;
+
+  private SelectronicBinding d;
+
+  private EventPublisher e;
+
+  private Boolean f;
+
+  private UtilSelectronic g = new UtilSelectronic();
+
+  private ServiceMessages h = new ServiceMessages();
+
+  private int i = 0;
+
+  private SelectronicConfig j;
+
+  private String k;
+
+  private int l;
+
+  private int m;
+
+  private int n = 4;
+
+  private int o = 4;
+
+  private int p = 1;
+
+  private int q = 74;
+
+  private Boolean r;
+
+  private Boolean s;
+
+  private long t = 0L;
+
+  private long u = 0L;
+
+  private SelectronicConfiguration v;
+
+  private Boolean w = Boolean.valueOf(false);
+
+  private Boolean x = Boolean.valueOf(false);
+
+  private Boolean y = Boolean.valueOf(false);
+
+  private Calendar z;
+
+  private Long A = Long.valueOf(0L);
+
+  private Long B = Long.valueOf(0L);
+
+  private ConcurrentHashMap<String, SelectronicJob> C;
+
+  private State[] D = new State[(SelectronicEnum.values()).length];
+
+  private long E;
+
+  private long F;
+
+  private long G;
+
+  private SelectronicFCAS H;
+
+  private int I = 0;
+
+  private float J = -1.0F;
+
+  private float K = -1.0F;
+
+  private float L = -1.0F;
+
+  private List<GatewayIdSelectronicInverter> M = new ArrayList<GatewayIdSelectronicInverter>();
+
+  private int N = -1;
+
+  private DiagnosticStore O;
+
+  public int refreshCounter = 0;
+
+  public SelectronicInverter(Collection<SelectronicBindingProvider> parProviders, EventPublisher parEventPublisher, String parName, SelectronicBinding parSelectronicBinding) {
+    this.f = Boolean.valueOf(false);
+    this.k = parName;
+    this.r = Boolean.valueOf(true);
+    this.b = ConnectorStatusEnum.CLOSED;
+    this.v = new SelectronicConfiguration(parSelectronicBinding, this.k);
+    this.c = new SelectronicConnection(this, this.v);
+    this.d = parSelectronicBinding;
+    this.e = parEventPublisher;
+    this.s = Boolean.valueOf(c().exists());
+    this.z = Calendar.getInstance();
+    this.C = new ConcurrentHashMap<String, SelectronicJob>();
+    this.H = new SelectronicFCAS(parSelectronicBinding, this.k, this.c);
+    this.O = new DiagnosticStore(this);
+    i();
+    a.info(String.format("DeveloperMode: %s", new Object[] { this.s }));
+  }
+
+  private File c() {
+    return new File(String.valueOf(Automator.getArvioFolder()) + File.separator + "DevModeSelectronic.txt");
+  }
+
+  public String getName() {
+    return this.k;
+  }
+
+  public SelectronicConfig getConfig() {
+    return this.j;
+  }
+
+  public void disconnect() {
+    try {
+      a.debug(String.format("disconnect %s, call publishEmptyResultSet", new Object[] { this.k }));
+      d();
+      a.debug(String.format("disconnect %s, call selectronicConnection.disconnect()", new Object[] { this.k }));
+      this.c.disconnect();
+      this.v.disconnectConfiguration(this.j);
+      this.C.clear();
+      this.J = -1.0F;
+    } catch (Exception exception) {
+      a.error(String.format("Error in disconnect for '%s', errormessage: %s", new Object[] { this.k, exception.getMessage() }));
+    } finally {
+      this.f = Boolean.valueOf(false);
+      this.j = null;
+      a(ConnectorStatusEnum.CLOSED);
+    }
+  }
+
+  private void d() {
+    try {
+      if (this.y.booleanValue()) {
+        this.d.getSelectronicItems().publishEmptyResultSet(this.e, this.k);
+        this.D = new State[(SelectronicEnum.values()).length];
+        this.y = Boolean.valueOf(false);
+      }
+    } catch (Exception exception) {
+      a.error(String.format("Error in publishEmptyResultSet for '%s', errormessage: %s", new Object[] { this.k, exception.getMessage() }));
+    }
+  }
+
+  public boolean isConnected() {
+    return this.f.booleanValue();
+  }
+
+  public boolean isPaused() {
+    return this.c.isPaused();
+  }
+
+  public Boolean connect(SelectronicConnectionInfo parSelectronicConnectionInfo, String parPort, int parBaud) {
+    try {
+      if (parPort != null && parPort.length() > 0 && parBaud > 0 &&
+        a(parSelectronicConnectionInfo, parPort, parBaud).booleanValue())
+        return Boolean.valueOf(true);
+      List list = Automator.getAvailableCOMPorts();
+      for (String str : list) {
+        a.debug(String.format("connectToDefaultSerialNumber: connect to port '%s' for Selectronic '%s'", new Object[] { this.k, str }));
+        if (a(parSelectronicConnectionInfo, str, 0).booleanValue())
+          return Boolean.valueOf(true);
+      }
+    } catch (Exception exception) {
+      a.error(String.format("Error in connectToDefaultSerialNumber for '%s', errormessage: %s", new Object[] { this.k, exception.getMessage() }));
+    }
+    return Boolean.valueOf(false);
+  }
+
+  public int getLowestSerialNumber(SelectronicConnectionInfo parSelectronicConnectionInfo) {
+    int i = Integer.MAX_VALUE;
+    try {
+      List list = Automator.getAvailableCOMPorts();
+      for (String str : list) {
+        a.debug(String.format("getLowestSerialNumber: connect to port '%s' for Selectronic '%s'", new Object[] { this.k, str }));
+        if (a(parSelectronicConnectionInfo, str, 0).booleanValue() &&
+          this.j != null &&
+          this.j.serialNumber < i)
+          i = this.j.serialNumber;
+      }
+    } catch (Exception exception) {
+      a.error(String.format("Error in getLowestSerialNumber for '%s', errormessage: %s", new Object[] { this.k, exception.getMessage() }));
+    }
+    return i;
+  }
+
+  public void diagnoticStoreCheck() {
+    if (this.d.getFCASMode() != 1)
+      this.O.check();
+  }
+
+  private Boolean a(SelectronicConnectionInfo paramSelectronicConnectionInfo, String paramString, int paramInt) {
+    try {
+      this.c.setPort(paramString);
+      this.c.setBaud(paramInt);
+      this.c.setEnabled(this.r);
+      if (this.c.connect(paramSelectronicConnectionInfo).booleanValue()) {
+        if (this.j != null) {
+          if (this.m <= 0 || this.m == this.j.serialNumber) {
+            a(true, paramSelectronicConnectionInfo);
+            this.v.SaveSPProConfiguration(Boolean.valueOf(false), this.j);
+            a(paramSelectronicConnectionInfo);
+            a(ConnectorStatusEnum.CONNECTED);
+            this.f = Boolean.valueOf(true);
+            this.u = System.currentTimeMillis();
+            this.l = 0;
+            a.info(String.format("Selectronic connected at port %s for '%s'", new Object[] { paramString, this.k }).toUpperCase());
+            return Boolean.valueOf(true);
+          }
+          this.l++;
+          a.warn(String.format("Connected, but disconnect '%s' because COM ports have changed, expected serial number %s, retrieved serial number %s", new Object[] { this.k, Integer.valueOf(this.m), Integer.valueOf(this.j.serialNumber) }));
+        } else {
+          a.warn(String.format("Connected, but disconnect '%s' because configuration not retrieved", new Object[] { this.k }));
+        }
+        disconnect();
+      } else {
+        a.debug(String.format("Selectronic '%s' failed to connect, connectedflag: %s", new Object[] { this.k, this.f }));
+      }
+    } catch (Exception exception) {
+      a.error(String.format("Error in connectToSelectronicInverter for '%s', errormessage: %s", new Object[] { this.k, exception.getMessage() }));
+    }
+    return Boolean.valueOf(false);
+  }
+
+  private void a(SelectronicConnectionInfo paramSelectronicConnectionInfo, int paramInt) throws SelectronicException {
+    a.info(String.format("Start SetEnableConfigChanges for %s, GatewayId: %s", new Object[] { this.k, Integer.valueOf(paramInt) }));
+    UInt16[] arrayOfUInt161 = new UInt16[1];
+    arrayOfUInt161[0] = new UInt16(this.q);
+    this.c.writeMultipleRequests(40961, arrayOfUInt161, paramSelectronicConnectionInfo, "SettingsPasscodeA", 10, paramInt);
+    arrayOfUInt161[0] = new UInt16(0);
+    this.c.writeMultipleRequests(40961, arrayOfUInt161, paramSelectronicConnectionInfo, "SettingsPasscodeB", 10, paramInt);
+    UInt16[] arrayOfUInt162 = this.c.readMultipleRequests(40962, 0, paramSelectronicConnectionInfo, "Authorized", 10, paramInt);
+    if (arrayOfUInt162[0].intValue() == 1) {
+      a.info(String.format("SetEnableConfigChanges returns true for %s, GatewayId: %s", new Object[] { this.k, Integer.valueOf(paramInt) }));
+    } else {
+      String str = "";
+      if (arrayOfUInt162[0].intValue() == 0) {
+        str = "Invalid Password provided, therefore SP Pro settings cannot be changed";
+      } else {
+        str = "The passcode check failed, please try again";
+      }
+      a.error(String.format("%s for %s", new Object[] { str, this.k }));
+      throw new SelectronicException(str);
+    }
+  }
+
+  public SelectronicConfig getSelectronicConfig() {
+    return this.j;
+  }
+
+  public void retrieveSelectronicConfig(SelectronicConnectionInfo parSelectronicConnectionInfo, int parGatewayId, SelectronicInverter parSelectronicInverter) {
+    a.info(String.format("start retrieveSelectronicConfig() for inverter %s, gatewayId: %s", new Object[] { parSelectronicInverter.k, Integer.valueOf(parGatewayId) }));
+    SelectronicConfig selectronicConfig = new SelectronicConfig();
+    UInt16[] arrayOfUInt161 = this.c.readMultipleRequests(49477, 0, parSelectronicConnectionInfo, "Phase", 10, parGatewayId);
+    selectronicConfig.SpproPhaseValue = arrayOfUInt161[0].shortValue();
+    switch (selectronicConfig.SpproPhaseValue) {
+      case 0:
+        selectronicConfig.SpproPhase = "";
+        break;
+      case 1:
+        selectronicConfig.SpproPhase = "L1";
+        break;
+      case 2:
+        selectronicConfig.SpproPhase = "L2";
+        break;
+      case 3:
+        selectronicConfig.SpproPhase = "L3";
+        break;
+      case 4:
+        selectronicConfig.SpproPhase = "L2";
+        break;
+      default:
+        selectronicConfig.SpproPhase = "";
+        break;
+    }
+    a.info(String.format("Phase Value: %s, Phase String: %s for %s, GatewayId: %s", new Object[] { Integer.valueOf(selectronicConfig.SpproPhaseValue), selectronicConfig.SpproPhase, parSelectronicInverter.k, Integer.valueOf(parGatewayId) }));
+    UInt16[] arrayOfUInt162 = this.c.readMultipleRequests(40981, 182, parSelectronicConnectionInfo, "ArrayTechnicalDataTab", 10, parGatewayId);
+    selectronicConfig.versionNumber = arrayOfUInt162[29].intValue();
+    selectronicConfig.firmwareVersion = arrayOfUInt162[33].intValue();
+    selectronicConfig.serialNumber = (arrayOfUInt162[74].intValue() << 16) + arrayOfUInt162[73].intValue();
+    selectronicConfig.SpproModel = a(arrayOfUInt162[72].intValue());
+    selectronicConfig.CommonScaleForAcVolts = arrayOfUInt162[19].intValue();
+    selectronicConfig.CommonScaleForAcCurrent = arrayOfUInt162[20].intValue();
+    selectronicConfig.CommonScaleForDcVolts = arrayOfUInt162[21].intValue();
+    selectronicConfig.CommonScaleForDcCurrent = arrayOfUInt162[22].intValue();
+    selectronicConfig.CommonScaleForTemperature = arrayOfUInt162[23].intValue();
+    UInt16[] arrayOfUInt163 = this.c.readMultipleRequests(49536, 134, parSelectronicConnectionInfo, "BattTypeConfigSettings", 10, parGatewayId);
+    selectronicConfig.ExpCardEnabled = arrayOfUInt163[134].intValue();
+    UInt16[] arrayOfUInt164 = this.c.readMultipleRequests(49408, 89, parSelectronicConnectionInfo, "StartAppTypeConfigSettings", 10, parGatewayId);
+    selectronicConfig.ShuntName1 = this.g.ReturnShuntDisplayString(arrayOfUInt164[9].intValue());
+    selectronicConfig.ShuntName2 = this.g.ReturnShuntDisplayString(arrayOfUInt164[9].intValue());
+    UInt16[] arrayOfUInt165 = this.c.readMultipleRequests(40967, 20, parSelectronicConnectionInfo, "InterfaceVersionNumbers", 10, parGatewayId);
+    selectronicConfig.InverterConfigurationSettingsVersionNumber = arrayOfUInt165[0].intValue();
+    selectronicConfig.InverterServiceSettingsVersionNumber = arrayOfUInt165[1].intValue();
+    selectronicConfig.InverterMemoryMapVersionNumber = arrayOfUInt165[2].intValue();
+    selectronicConfig.InverterEventLoggedDataFormatVersionNumber = arrayOfUInt165[3].intValue();
+    selectronicConfig.InverterDetailedLoggedDataFormatVersionNumber = arrayOfUInt165[4].intValue();
+    selectronicConfig.InverterDailySummaryLoggedDataFormatVersionNumber = arrayOfUInt165[5].intValue();
+    selectronicConfig.InverterStringInverterSupportNumber = arrayOfUInt165[14].intValue();
+    selectronicConfig.InverterCommsCardAttached = arrayOfUInt165[15].intValue();
+    if (selectronicConfig.InverterCommsCardAttached == 65535)
+      selectronicConfig.InverterCommsCardAttached = 0;
+    selectronicConfig.InverterCommsCardSoftwareVersion = 65534;
+    if (selectronicConfig.InverterCommsCardAttached < 1) {
+      selectronicConfig.InverterCommsCardSoftwareVersion = 65535;
+    } else {
+      selectronicConfig.InverterCommsCardSoftwareVersion = arrayOfUInt165[20].intValue();
+    }
+    UInt16[] arrayOfUInt166 = this.c.readMultipleRequests(49389, 0, parSelectronicConnectionInfo, "MultiphaseStructure", 10, parGatewayId);
+    selectronicConfig.MultiphaseStructure = arrayOfUInt166[0].shortValue();
+    String str = StringUtils.repeat("-", 20);
+    a.info(String.valueOf(String.format("%s Start Values Selectronic configuration %s %s", new Object[] { str, parSelectronicInverter.k, str })) + "\n" +
+        String.format("config.versionNumber %s for inverter %s", new Object[] { Integer.valueOf(selectronicConfig.versionNumber), parSelectronicInverter.k }) + "\n" +
+        String.format("config.firmwareVersion %s for inverter %s", new Object[] { Integer.valueOf(selectronicConfig.firmwareVersion), parSelectronicInverter.k }) + "\n" +
+        String.format("config.serialNumber %s for inverter %s", new Object[] { Integer.valueOf(selectronicConfig.serialNumber), parSelectronicInverter.k }) + "\n" +
+        String.format("config.CommonScaleForAcVolts %s for inverter %s", new Object[] { Float.valueOf(selectronicConfig.CommonScaleForAcVolts), parSelectronicInverter.k }) + "\n" +
+        String.format("config.CommonScaleForAcCurrent %s for inverter %s", new Object[] { Float.valueOf(selectronicConfig.CommonScaleForAcCurrent), parSelectronicInverter.k }) + "\n" +
+        String.format("config.CommonScaleForDcVolts %s for inverter %s", new Object[] { Float.valueOf(selectronicConfig.CommonScaleForDcVolts), parSelectronicInverter.k }) + "\n" +
+        String.format("config.CommonScaleForDcCurrent %s for inverter %s", new Object[] { Float.valueOf(selectronicConfig.CommonScaleForDcCurrent), parSelectronicInverter.k }) + "\n" +
+        String.format("config.CommonScaleForTemperature %s for inverter %s", new Object[] { Float.valueOf(selectronicConfig.CommonScaleForTemperature), parSelectronicInverter.k }) + "\n" +
+        String.format("config.ExpCardEnabled %s for inverter %s", new Object[] { Integer.valueOf(selectronicConfig.ExpCardEnabled), parSelectronicInverter.k }) + "\n" +
+        String.format("config.ShuntName1 '%s' for inverter %s", new Object[] { selectronicConfig.ShuntName1, parSelectronicInverter.k }) + "\n" +
+        String.format("config.ShuntName2 '%s' for inverter %s", new Object[] { selectronicConfig.ShuntName2, parSelectronicInverter.k }) + "\n" +
+        String.format("config.SpproModel '%s' for inverter %s", new Object[] { selectronicConfig.SpproModel, parSelectronicInverter.k }) + "\n" +
+        String.format("config.SpproPhase '%s' for inverter %s", new Object[] { selectronicConfig.SpproPhase, parSelectronicInverter.k }) + "\n" +
+        String.format("config.SpproPhaseValue '%s' for inverter %s", new Object[] { Integer.valueOf(selectronicConfig.SpproPhaseValue), parSelectronicInverter.k }) + "\n" +
+        String.format("config.InverterConfigurationSettingsVersionNumber '%s' for inverter %s", new Object[] { Integer.valueOf(selectronicConfig.InverterConfigurationSettingsVersionNumber), parSelectronicInverter.k }) + "\n" +
+        String.format("config.InverterServiceSettingsVersionNumber '%s' for inverter %s", new Object[] { Integer.valueOf(selectronicConfig.InverterServiceSettingsVersionNumber), parSelectronicInverter.k }) + "\n" +
+        String.format("config.InverterMemoryMapVersionNumber '%s' for inverter %s", new Object[] { Integer.valueOf(selectronicConfig.InverterMemoryMapVersionNumber), parSelectronicInverter.k }) + "\n" +
+        String.format("config.InverterEventLoggedDataFormatVersionNumber '%s' for inverter %s", new Object[] { Integer.valueOf(selectronicConfig.InverterEventLoggedDataFormatVersionNumber), parSelectronicInverter.k }) + "\n" +
+        String.format("config.InverterDetailedLoggedDataFormatVersionNumber '%s' for inverter %s", new Object[] { Integer.valueOf(selectronicConfig.InverterDetailedLoggedDataFormatVersionNumber), parSelectronicInverter.k }) + "\n" +
+        String.format("config.InverterDailySummaryLoggedDataFormatVersionNumber '%s' for inverter %s", new Object[] { Integer.valueOf(selectronicConfig.InverterDailySummaryLoggedDataFormatVersionNumber), parSelectronicInverter.k }) + "\n" +
+        String.format("config.InverterStringInverterSupportNumber '%s' for inverter %s", new Object[] { Integer.valueOf(selectronicConfig.InverterStringInverterSupportNumber), parSelectronicInverter.k }) + "\n" +
+        String.format("config.InverterCommsCardSoftwareVersion '%s' for inverter %s", new Object[] { Integer.valueOf(selectronicConfig.InverterCommsCardSoftwareVersion), parSelectronicInverter.k }) + "\n" +
+        String.format("config.InverterCommsCardAttached '%s' for inverter %s", new Object[] { Integer.valueOf(selectronicConfig.InverterCommsCardAttached), parSelectronicInverter.k }) + "\n" +
+        String.format("config.MultiphaseStructure '%s' for inverter %s", new Object[] { Integer.valueOf(selectronicConfig.MultiphaseStructure), parSelectronicInverter.k }) + "\n" +
+        String.format("parGatewayId '%s' for inverter %s", new Object[] { Integer.valueOf(parGatewayId), parSelectronicInverter.k }) + "\n" +
+        String.format("GatewayId '%s' for inverter %s", new Object[] { Integer.valueOf(parSelectronicInverter.getGatewayId()), parSelectronicInverter.k }) + "\n" +
+        String.format("%s Finish Values Selectronic configuration %s %s", new Object[] { str, parSelectronicInverter.k, str }));
+    parSelectronicInverter.j = selectronicConfig;
+    if (!parSelectronicInverter.k.equalsIgnoreCase(this.k)) {
+      parSelectronicInverter.a(ConnectorStatusEnum.CONNECTED);
+      parSelectronicInverter.f = Boolean.valueOf(true);
+      parSelectronicInverter.u = System.currentTimeMillis();
+      a.info(String.format("MultiPhase support, Set connected to true for %s", new Object[] { parSelectronicInverter.k }));
+    }
+  }
+
+  private String a(int paramInt) {
+    switch (paramInt) {
+      case 0:
+        return "SPMC482";
+      case 1:
+        return "SPMC481";
+      case 2:
+        return "SPMC241";
+      case 3:
+        return "SPLC1202";
+      case 4:
+        return "SPMC1201";
+      case 5:
+        return "SPMC240";
+      case 6:
+        return "SPLC1201";
+      case 7:
+        return "SPLC1200";
+      case 8:
+        return "SPMC480";
+    }
+    return "NA";
+  }
+
+  protected void processConfigurationChange(SelectronicConnectionInfo parSelectronicConnectionInfo) {
+    a(false, parSelectronicConnectionInfo);
+    this.v.SaveSPProConfiguration(Boolean.valueOf(true), this.j);
+  }
+
+  private void a(boolean paramBoolean, SelectronicConnectionInfo paramSelectronicConnectionInfo) {
+    this.v.PrepareSPProConfiguration();
+    a(paramBoolean, paramSelectronicConnectionInfo, 0);
+    a.info(String.format("finished retrieveSelectronicConfiguration() for inverter %s, before: %s", new Object[] { this.k, Boolean.valueOf(paramBoolean) }));
+  }
+
+  private void a(boolean paramBoolean, SelectronicConnectionInfo paramSelectronicConnectionInfo, int paramInt) {
+    a(49381, 7, paramBoolean, paramSelectronicConnectionInfo, "CommonConfigSettings2ndHalf", paramInt);
+    a(49152, 196, paramBoolean, paramSelectronicConnectionInfo, "CommonConfigSettings", paramInt);
+    a(49408, 89, paramBoolean, paramSelectronicConnectionInfo, "AppTypeConfigSettings", paramInt);
+    a(49536, 134, paramBoolean, paramSelectronicConnectionInfo, "BattTypeConfigSettings", paramInt);
+    a(51200, 184, paramBoolean, paramSelectronicConnectionInfo, "SystemSchedulerConfigSettings", paramInt);
+  }
+
+  private void a(int paramInt1, int paramInt2, boolean paramBoolean, SelectronicConnectionInfo paramSelectronicConnectionInfo, String paramString, int paramInt3) {
+    UInt16[] arrayOfUInt16 = this.c.readMultipleRequests(paramInt1, paramInt2, paramSelectronicConnectionInfo, paramString, 10, paramInt3);
+    this.v.StoreConfigurationValues(paramInt1, paramInt2, arrayOfUInt16, paramBoolean);
+  }
+
+  private enum a {
+    a, b, c, d, e;
+  }
+
+  private enum b {
+    a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v;
+  }
+
+  private enum c {
+    a, b, c, d, e;
+  }
+
+  private void e() {}
+
+  private void a(Boolean paramBoolean, int paramInt, c[] paramArrayOfc, a[] paramArrayOfa) {
+    if (paramBoolean.booleanValue()) {
+      paramArrayOfc[paramInt] = c.a;
+      paramArrayOfa[paramInt] = a.a;
+    } else {
+      paramArrayOfc[paramInt] = c.b;
+      paramArrayOfa[paramInt] = a.e;
+    }
+  }
+
+  private void a(UInt16[] paramArrayOfUInt16, int paramInt1, int paramInt2, int paramInt3, c[] paramArrayOfc, a[] paramArrayOfa) {
+    if ((((paramArrayOfUInt16[paramInt1].intValue() == 0) ? 1 : 0) & ((paramArrayOfUInt16[paramInt2].intValue() == 0) ? 1 : 0)) != 0) {
+      paramArrayOfc[paramInt3] = c.a;
+      paramArrayOfa[paramInt3] = a.a;
+    } else if ((((paramArrayOfUInt16[paramInt1].intValue() == 0) ? 1 : 0) & ((paramArrayOfUInt16[paramInt2].intValue() == 1) ? 1 : 0)) != 0) {
+      paramArrayOfc[paramInt3] = c.b;
+      paramArrayOfa[paramInt3] = a.c;
+    } else if ((((paramArrayOfUInt16[paramInt1].intValue() == 0) ? 1 : 0) & ((paramArrayOfUInt16[paramInt2].intValue() == 2) ? 1 : 0)) != 0) {
+      paramArrayOfc[paramInt3] = c.c;
+      paramArrayOfa[paramInt3] = a.c;
+    } else if ((((paramArrayOfUInt16[paramInt1].intValue() == 0) ? 1 : 0) & ((paramArrayOfUInt16[paramInt2].intValue() == 3) ? 1 : 0)) != 0) {
+      paramArrayOfc[paramInt3] = c.d;
+      paramArrayOfa[paramInt3] = a.c;
+    } else if ((((paramArrayOfUInt16[paramInt1].intValue() == 0) ? 1 : 0) & ((paramArrayOfUInt16[paramInt2].intValue() == 4) ? 1 : 0)) != 0) {
+      paramArrayOfc[paramInt3] = c.e;
+      paramArrayOfa[paramInt3] = a.c;
+    } else if ((((paramArrayOfUInt16[paramInt1].intValue() == 1) ? 1 : 0) & ((paramArrayOfUInt16[paramInt2].intValue() == 0) ? 1 : 0)) != 0) {
+      paramArrayOfc[paramInt3] = c.b;
+      paramArrayOfa[paramInt3] = a.b;
+    } else if ((((paramArrayOfUInt16[paramInt1].intValue() == 2) ? 1 : 0) & ((paramArrayOfUInt16[paramInt2].intValue() == 0) ? 1 : 0)) != 0) {
+      paramArrayOfc[paramInt3] = c.c;
+      paramArrayOfa[paramInt3] = a.b;
+    } else if ((((paramArrayOfUInt16[paramInt1].intValue() == 3) ? 1 : 0) & ((paramArrayOfUInt16[paramInt2].intValue() == 0) ? 1 : 0)) != 0) {
+      paramArrayOfc[paramInt3] = c.d;
+      paramArrayOfa[paramInt3] = a.b;
+    } else if ((((paramArrayOfUInt16[paramInt1].intValue() == 4) ? 1 : 0) & ((paramArrayOfUInt16[paramInt2].intValue() == 0) ? 1 : 0)) != 0) {
+      paramArrayOfc[paramInt3] = c.e;
+      paramArrayOfa[paramInt3] = a.b;
+    } else if ((((paramArrayOfUInt16[paramInt1].intValue() == 1) ? 1 : 0) & ((paramArrayOfUInt16[paramInt2].intValue() == 1) ? 1 : 0)) != 0) {
+      paramArrayOfc[paramInt3] = c.b;
+      paramArrayOfa[paramInt3] = a.d;
+    } else if ((((paramArrayOfUInt16[paramInt1].intValue() == 2) ? 1 : 0) & ((paramArrayOfUInt16[paramInt2].intValue() == 2) ? 1 : 0)) != 0) {
+      paramArrayOfc[paramInt3] = c.c;
+      paramArrayOfa[paramInt3] = a.d;
+    } else if ((((paramArrayOfUInt16[paramInt1].intValue() == 3) ? 1 : 0) & ((paramArrayOfUInt16[paramInt2].intValue() == 3) ? 1 : 0)) != 0) {
+      paramArrayOfc[paramInt3] = c.d;
+      paramArrayOfa[paramInt3] = a.d;
+    } else if ((((paramArrayOfUInt16[paramInt1].intValue() == 4) ? 1 : 0) & ((paramArrayOfUInt16[paramInt2].intValue() == 4) ? 1 : 0)) == 0) {
+      e();
+    } else {
+      paramArrayOfc[paramInt3] = c.e;
+      paramArrayOfa[paramInt3] = a.d;
+    }
+  }
+
+  private void a(UInt16[] paramArrayOfUInt16, int paramInt1, int paramInt2, c[] paramArrayOfc, a[] paramArrayOfa) {
+    if (paramArrayOfUInt16[paramInt1].intValue() == 0) {
+      paramArrayOfc[paramInt2] = c.a;
+      paramArrayOfa[paramInt2] = a.a;
+    } else if (paramArrayOfUInt16[paramInt1].intValue() == 1) {
+      paramArrayOfc[paramInt2] = c.b;
+      paramArrayOfa[paramInt2] = a.b;
+    } else if (paramArrayOfUInt16[paramInt1].intValue() == 2) {
+      paramArrayOfc[paramInt2] = c.c;
+      paramArrayOfa[paramInt2] = a.b;
+    } else if (paramArrayOfUInt16[paramInt1].intValue() == 3) {
+      paramArrayOfc[paramInt2] = c.d;
+      paramArrayOfa[paramInt2] = a.b;
+    } else if (paramArrayOfUInt16[paramInt1].intValue() != 4) {
+      e();
+    } else {
+      paramArrayOfc[paramInt2] = c.e;
+      paramArrayOfa[paramInt2] = a.b;
+    }
+  }
+
+  private String a(a[] paramArrayOfa, int paramInt) {
+    if (this.s.booleanValue()) {
+      File file = c();
+      if (file.exists()) {
+        String str = b.values()[paramInt].name();
+        try {
+          FileInputStream fileInputStream = new FileInputStream(file);
+          BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fileInputStream));
+          String str1 = null;
+          while ((str1 = bufferedReader.readLine()) != null) {
+            if (str1.indexOf(str) > -1 && str1.indexOf(" ") > -1) {
+              String str2 = str1.substring(str1.indexOf(" ")).trim().toLowerCase();
+              if (str2.length() > 0) {
+                a.info(String.format("devmode for %s,  value: %s", new Object[] { str, str2 }));
+                return str2;
+              }
+            }
+          }
+          bufferedReader.close();
+        } catch (Exception exception) {}
+        return paramArrayOfa[paramInt].name().toLowerCase();
+      }
+      return paramArrayOfa[paramInt].name().toLowerCase();
+    }
+    return paramArrayOfa[paramInt].name().toLowerCase();
+  }
+
+  private void b(SelectronicConnectionInfo paramSelectronicConnectionInfo, int paramInt) {
+    if (System.currentTimeMillis() - this.t > 900000L)
+      try {
+        this.z = this.c.readInvertertime(1900544, 7, paramSelectronicConnectionInfo, paramInt);
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy'T'HH:mm:ss");
+        a.info(String.format("InverterTime for %s, GatewayId: %s", new Object[] { simpleDateFormat.format(this.z.getTime()), Integer.valueOf(paramInt) }));
+        Calendar calendar = Calendar.getInstance();
+        long l = (this.z.getTimeInMillis() - calendar.getTimeInMillis()) / 1000L;
+        a(SelectronicEnum.InvertimeVersusCollectorTimeInSeconds, (State)new DecimalType(l));
+        this.t = System.currentTimeMillis();
+        if (SelectronicSettings.getSynchSPProTimeEnabled())
+          if (Math.abs(l) >= 60L || l > 0L) {
+            calendar.add(13, -15);
+            byte[] arrayOfByte = new byte[14];
+            byte b1 = (byte)(calendar.get(13) / 10);
+            byte b2 = (byte)(calendar.get(13) % 10);
+            arrayOfByte[1] = (byte)(b1 << 4 | b2);
+            byte b3 = (byte)(calendar.get(12) / 10);
+            byte b4 = (byte)(calendar.get(12) % 10);
+            arrayOfByte[3] = (byte)(b3 << 4 | b4);
+            byte b5 = (byte)(calendar.get(11) / 10);
+            byte b6 = (byte)(calendar.get(11) % 10);
+            arrayOfByte[5] = (byte)(b5 << 4 | b6);
+            arrayOfByte[7] = (byte)(calendar.get(7) - 1);
+            byte b7 = (byte)(calendar.get(5) / 10);
+            byte b8 = (byte)(calendar.get(5) % 10);
+            arrayOfByte[9] = (byte)(b7 << 4 | b8);
+            byte b9 = (byte)((calendar.get(2) + 1) / 10);
+            byte b10 = (byte)((calendar.get(2) + 1) % 10);
+            byte b11 = (byte)(calendar.get(1) % 1000 / 100);
+            if (b11 > 100)
+              b11 = 100;
+            arrayOfByte[11] = (byte)(b11 << 7 | (byte)(b9 << 4 | b10));
+            byte b12 = (byte)(calendar.get(1) % 100 / 10);
+            byte b13 = (byte)(calendar.get(1) % 10);
+            if (b11 == 100 && b12 > 20)
+              b12 = 20;
+            arrayOfByte[13] = (byte)(b12 << 4 | b13);
+            this.c.writeMultipleRequests(1900561, this.g.fnConvertByteArrayToUShortArray(arrayOfByte), paramSelectronicConnectionInfo, "SetTime", 10, paramInt);
+            this.z = this.c.readInvertertime(1900544, 7, paramSelectronicConnectionInfo, paramInt);
+            a.info(String.format("InverterTime2 for %s, GatewayId: %s", new Object[] { simpleDateFormat.format(this.z.getTime()), Integer.valueOf(paramInt) }));
+            a(SelectronicEnum.InvertimeVersusCollectorTimeInSeconds, (State)new DecimalType((this.z.getTimeInMillis() - Calendar.getInstance().getTimeInMillis()) / 1000L));
+          }
+      } catch (NullPointerException nullPointerException) {
+        if (this.f.booleanValue())
+          a.error(String.format("ERROR checkInverterTime, NullPointerException:%s", new Object[] { Integer.valueOf(this.i), nullPointerException.getMessage() }));
+      }
+  }
+
+  private Boolean f() {
+    if (!this.c.isPaused()) {
+      long l = 4L * SelectronicSettings.getRefreshIntervalSPPro() * 1000L;
+      if (System.currentTimeMillis() - this.u - (int)Math.round(0.5D * l) > 0L)
+        a.info(String.format("Warning, stale data message, countdown: %s", new Object[] { Long.valueOf(System.currentTimeMillis() - this.u - l) }));
+      if (System.currentTimeMillis() - this.u > l) {
+        a.error(String.format("No data received for %s ms, stale connection will be disconnected for %s", new Object[] { Long.valueOf(l), this.k }).toUpperCase());
+        disconnect();
+        return Boolean.valueOf(false);
+      }
+    }
+    return Boolean.valueOf(true);
+  }
+
+  public void getStatus(SelectronicConnectionInfo parSelectronicConnectionInfo, int parGatewayId) {
+    try {
+      if (f().booleanValue()) {
+        a.trace(String.format("start getStatus() for inverter %s", new Object[] { this.k }));
+        this.E = 0L;
+        this.F = 0L;
+        this.G = 0L;
+        b(parSelectronicConnectionInfo, parGatewayId);
+        this.c.submitRequest(41175, 69, parSelectronicConnectionInfo, "LedStatus", 1, parGatewayId);
+        this.c.submitRequest(49152, 196, parSelectronicConnectionInfo, "CommonParameters", 1, parGatewayId);
+        this.c.submitRequest(41533, 75, parSelectronicConnectionInfo, "ServiceRequired", 1, parGatewayId);
+        this.c.submitRequest(41912, 50, parSelectronicConnectionInfo, "TechnicalData", 1, parGatewayId);
+        this.c.submitRequest(51200, 184, parSelectronicConnectionInfo, "SystemSchedulerConfigSettings", 1, parGatewayId);
+        this.c.submitRequest(40981, 182, parSelectronicConnectionInfo, "TechnicalDataTab", 0, parGatewayId);
+        this.i = 0;
+        a(SelectronicEnum.SerialNumber, (State)new DecimalType(getSerialNumber()));
+        a(SelectronicEnum.ConnectionStatus, (State)new StringType(getConnectionStatus()));
+        a(SelectronicEnum.SpproModel, (State)new StringType(getSpproModel()));
+        a(SelectronicEnum.SpproPhase, (State)new StringType(getSpproPhase()));
+        a(SelectronicEnum.SpproPhaseValue, (State)new DecimalType(getSpproPhaseValue()));
+        this.y = Boolean.valueOf(true);
+        a.trace(String.format("finished getStatus for %s", new Object[] { this.k }));
+      }
+    } catch (NullPointerException nullPointerException) {
+      if (this.f.booleanValue()) {
+        this.i++;
+        a.error(String.format("ERROR getStatus, errorCounter:%s NullPointerException:%s", new Object[] { Integer.valueOf(this.i), Util.getStackTraceString(nullPointerException) }));
+      }
+    }
+  }
+
+  public void getMultiPhaseStatus(SelectronicConnectionInfo parSelectronicConnectionInfo, int parGatewayId) {
+    try {
+      if (f().booleanValue()) {
+        a.trace(String.format("start getMultiPhaseStatus() for inverter %s, GatewayId: %s", new Object[] { this.k, Integer.valueOf(parGatewayId) }));
+        if (parGatewayId == 0)
+          b(parSelectronicConnectionInfo, parGatewayId);
+        this.c.submitRequest(41175, 69, parSelectronicConnectionInfo, "LedStatus", 1, parGatewayId);
+        this.c.submitRequest(49152, 196, parSelectronicConnectionInfo, "CommonParameters", 1, parGatewayId);
+        this.c.submitRequest(41533, 75, parSelectronicConnectionInfo, "ServiceRequired", 1, parGatewayId);
+        this.c.submitRequest(41912, 50, parSelectronicConnectionInfo, "TechnicalData", 1, parGatewayId);
+        this.c.submitRequest(51200, 184, parSelectronicConnectionInfo, "SystemSchedulerConfigSettings", 1, parGatewayId);
+        this.c.submitRequest(40981, 182, parSelectronicConnectionInfo, "TechnicalDataTab", 0, parGatewayId);
+        a.trace(String.format("finished getMultiPhaseStatus for %s, GatewayId: %s", new Object[] { this.k, Integer.valueOf(parGatewayId) }));
+      }
+    } catch (NullPointerException nullPointerException) {
+      if (this.f.booleanValue()) {
+        this.i++;
+        a.error(String.format("ERROR getMultiPhaseStatus, errorCounter:%s NullPointerException:%s", new Object[] { Integer.valueOf(this.i), Util.getStackTraceString(nullPointerException) }));
+      }
+    }
+  }
+
+  public void setMultiPhaseStats(int parGatewayId) {
+    try {
+      a.trace(String.format("start setMultiPhaseStats() for inverter %s, GatewayId: %s", new Object[] { this.k, Integer.valueOf(parGatewayId) }));
+      this.E = 0L;
+      this.F = 0L;
+      this.G = 0L;
+      this.i = 0;
+      a(SelectronicEnum.SerialNumber, (State)new DecimalType(getSerialNumber()));
+      a(SelectronicEnum.ConnectionStatus, (State)new StringType(getConnectionStatus()));
+      a(SelectronicEnum.SpproModel, (State)new StringType(getSpproModel()));
+      a(SelectronicEnum.SpproPhase, (State)new StringType(getSpproPhase()));
+      a(SelectronicEnum.SpproPhaseValue, (State)new DecimalType(getSpproPhaseValue()));
+      this.y = Boolean.valueOf(true);
+      a.trace(String.format("finished setMultiPhaseStats for %s, GatewayId: %s", new Object[] { this.k, Integer.valueOf(parGatewayId) }));
+    } catch (Exception exception) {
+      a.error(String.format("ERROR setMultiPhaseStats, error:%s", new Object[] { exception.getMessage() }));
+    }
+  }
+
+  public void refreshFCASMetrics(SelectronicConnectionInfo parSelectronicConnectionInfo, int parGatewayId) {
+    try {
+      if (f().booleanValue())
+        this.c.submitRequest(41101, 5, parSelectronicConnectionInfo, "FCASMetrics", 0, parGatewayId);
+    } catch (NullPointerException nullPointerException) {
+      if (this.f.booleanValue()) {
+        this.i++;
+        a.error(String.format("ERROR getStatus, errorCounter:%s NullPointerException:%s", new Object[] { Integer.valueOf(this.i), Util.getStackTraceString(nullPointerException) }));
+      }
+    }
+  }
+
+  public void refreshed(SelectronicJob parSelectronicJob) {
+    try {
+      if (parSelectronicJob.gatewayId == 0) {
+        this.C.put(parSelectronicJob.key, parSelectronicJob);
+      } else if (parSelectronicJob.gatewayId < this.M.size()) {
+        for (GatewayIdSelectronicInverter gatewayIdSelectronicInverter : this.M) {
+          if (gatewayIdSelectronicInverter.GatewayId == parSelectronicJob.gatewayId) {
+            if (gatewayIdSelectronicInverter.SelectronicInverter != null) {
+              gatewayIdSelectronicInverter.SelectronicInverter.gatewayRefreshed(parSelectronicJob);
+            } else {
+              a.info(String.format("refreshed, entryGateway.getValue() is null for gatewayId: %s", new Object[] { Integer.valueOf(gatewayIdSelectronicInverter.GatewayId) }));
+            }
+            return;
+          }
+        }
+        a.error(String.format("ERROR: gateway inverter not found for gatewayId: %s in %s", new Object[] { Integer.valueOf(parSelectronicJob.gatewayId), this.k }));
+      } else {
+        a.error(String.format("ERROR: parSelectronicJob.gatewayId greater then listGatewayIdSelectronicInverters.size(), %s versus %s in %s", new Object[] { Integer.valueOf(parSelectronicJob.gatewayId), Integer.valueOf(this.M.size()), this.k }));
+      }
+    } catch (Exception exception) {
+      a.error("ERROR: refreshed: " + exception.getMessage());
+    }
+  }
+
+  public void gatewayRefreshed(SelectronicJob parSelectronicJob) {
+    try {
+      this.C.put(parSelectronicJob.key, parSelectronicJob);
+    } catch (Exception exception) {
+      a.error("ERROR: gatewayRefreshed: " + exception.getMessage());
+    }
+  }
+
+  private void a(SelectronicEnum paramSelectronicEnum, State paramState) {
+    State state = this.D[paramSelectronicEnum.ordinal()];
+    String str = String.format("%s_%s", new Object[] { this.k, paramSelectronicEnum.toString() });
+    a(str, paramState);
+    if (paramState == null) {
+      if (state != null) {
+        this.D[paramSelectronicEnum.ordinal()] = paramState;
+        this.e.postUpdate(str, paramState);
+      }
+    } else if (state == null || !paramState.toString().equals(state.toString())) {
+      this.D[paramSelectronicEnum.ordinal()] = paramState;
+      this.e.postUpdate(str, paramState);
+    }
+  }
+
+  private void a(SelectronicJob paramSelectronicJob) {
+    float f1 = paramSelectronicJob.processedResponse[0].shortValue() / 100.0F;
+    float f2 = paramSelectronicJob.processedResponse[3].intValue() * this.j.CommonScaleForAcVolts / 327680.0F;
+    this.u = System.currentTimeMillis();
+    this.H.processFCASMetrics(
+        paramSelectronicJob,
+        f1,
+        f2,
+        this.J,
+        this.K,
+        this.L,
+        paramSelectronicJob.gatewayId);
+  }
+
+  private void b(SelectronicJob paramSelectronicJob) {
+    UInt16[] arrayOfUInt16 = paramSelectronicJob.processedResponse;
+    a(paramSelectronicJob, SelectronicEnum.ArraySystemSchedulerConfigSettings);
+    a(SelectronicEnum.Priority1Enabled, (arrayOfUInt16[0].intValue() == 1) ? (State)OnOffType.ON : (State)OnOffType.OFF);
+    a(SelectronicEnum.Priority2Enabled, (arrayOfUInt16[23].intValue() == 1) ? (State)OnOffType.ON : (State)OnOffType.OFF);
+    a(SelectronicEnum.Priority3Enabled, (arrayOfUInt16[46].intValue() == 1) ? (State)OnOffType.ON : (State)OnOffType.OFF);
+    a(SelectronicEnum.Priority4Enabled, (arrayOfUInt16[69].intValue() == 1) ? (State)OnOffType.ON : (State)OnOffType.OFF);
+    a(SelectronicEnum.Priority5Enabled, (arrayOfUInt16[92].intValue() == 1) ? (State)OnOffType.ON : (State)OnOffType.OFF);
+    a(SelectronicEnum.Priority6Enabled, (arrayOfUInt16[115].intValue() == 1) ? (State)OnOffType.ON : (State)OnOffType.OFF);
+    a(SelectronicEnum.Priority7Enabled, (arrayOfUInt16[138].intValue() == 1) ? (State)OnOffType.ON : (State)OnOffType.OFF);
+    a(SelectronicEnum.Priority8Enabled, (arrayOfUInt16[161].intValue() == 1) ? (State)OnOffType.ON : (State)OnOffType.OFF);
+  }
+
+  private void c(SelectronicJob paramSelectronicJob) {
+    UInt16[] arrayOfUInt16 = paramSelectronicJob.processedResponse;
+    a(paramSelectronicJob, SelectronicEnum.ArrayTechnicalDataTab);
+    a(SelectronicEnum.DCVolts, (State)new DecimalType((arrayOfUInt16[25].shortValue() * this.j.CommonScaleForDcVolts / 327680.0F)));
+    a(SelectronicEnum.DCBatteryPower, (State)new DecimalType((this.g.convert2UShortsInto1Uint(arrayOfUInt16[26], arrayOfUInt16[27]) * -1.0F * this.j.CommonScaleForDcVolts * this.j.CommonScaleForDcCurrent / 3276800.0F)));
+    a(SelectronicEnum.VersionNumber, (State)new DecimalType((arrayOfUInt16[29].shortValue() / 100.0F)));
+    a(SelectronicEnum.GridSoftwareVersion, (State)new DecimalType((arrayOfUInt16[33].shortValue() / 100.0F)));
+    a(SelectronicEnum.BuildDate, (State)new StringType(this.g.convertDate(arrayOfUInt16[30], arrayOfUInt16[31])));
+    a(SelectronicEnum.BuildTime, (State)new StringType(this.g.convertTime(arrayOfUInt16[32])));
+    float f1 = -1.0F;
+    if (arrayOfUInt16[34].intValue() > arrayOfUInt16[35].intValue())
+      f1 = (float)this.g.convertTemperatureValue(arrayOfUInt16[34], this.j);
+    a(SelectronicEnum.HeatsinkTemperature, (State)new DecimalType(f1));
+    a(SelectronicEnum.ControlBoardTemperature, (State)new DecimalType((float)this.g.convertTemperatureValue(arrayOfUInt16[38], this.j)));
+    a(SelectronicEnum.TransformerTemperature, (State)new DecimalType((float)this.g.convertTemperatureValue(arrayOfUInt16[40], this.j)));
+    a(SelectronicEnum.InletAirTemperature, (State)new DecimalType((float)this.g.convertTemperatureValue(arrayOfUInt16[41], this.j)));
+    a(SelectronicEnum.InverterRunHrsTotalAcc, (State)new DecimalType((this.g.convert2UShortsInto1Uint(arrayOfUInt16[42], arrayOfUInt16[43]) / 60.0F)));
+    a(SelectronicEnum.FanLife, (State)new DecimalType((arrayOfUInt16[44].intValue() / 256.0F)));
+    a(SelectronicEnum.FanSpeed, (State)new DecimalType((arrayOfUInt16[45].intValue() / 256.0F)));
+    a(SelectronicEnum.CapacitorLifeConsumedPM1, (State)new DecimalType((arrayOfUInt16[46].shortValue() / 256.0F)));
+    a(SelectronicEnum.CapacitorLifeConsumedPM2, (State)new DecimalType((arrayOfUInt16[47].shortValue() / 256.0F)));
+    a(SelectronicEnum.ChargeStatus, (State)new DecimalType(arrayOfUInt16[48].intValue()));
+    a(SelectronicEnum.BatteryMidPoint, (State)new DecimalType((arrayOfUInt16[49].shortValue() * this.j.CommonScaleForDcVolts / 327680.0F)));
+    a(SelectronicEnum.DaysSinceEqualise, (State)new DecimalType(arrayOfUInt16[50].shortValue()));
+    if (arrayOfUInt16[51].intValue() == 65535) {
+      a(SelectronicEnum.DaystoEqualise, (State)new DecimalType(-1L));
+    } else {
+      a(SelectronicEnum.DaystoEqualise, (State)new DecimalType(arrayOfUInt16[51].shortValue()));
+    }
+    a(SelectronicEnum.ChargeIndex, (State)new DecimalType((arrayOfUInt16[52].shortValue() / 2048.0F)));
+    a(SelectronicEnum.BatteryCableLoss, (State)new DecimalType((arrayOfUInt16[53].shortValue() * this.j.CommonScaleForDcVolts * this.j.CommonScaleForDcCurrent / 3276800.0F)));
+    if (this.j.ExpCardEnabled == 1) {
+      a(SelectronicEnum.DigitalOutStatus1, (State)new DecimalType(arrayOfUInt16[54].shortValue()));
+      a(SelectronicEnum.DigitalOutStatus2, (State)new DecimalType(arrayOfUInt16[55].shortValue()));
+      a(SelectronicEnum.DigitalOutStatus3, (State)new DecimalType(arrayOfUInt16[56].shortValue()));
+      a(SelectronicEnum.DigitalOutStatus4, (State)new DecimalType(arrayOfUInt16[57].shortValue()));
+      a(SelectronicEnum.DigitalOutStatus5, (State)new DecimalType(arrayOfUInt16[58].shortValue()));
+      a(SelectronicEnum.DigitalOutStatus6, (State)new DecimalType(arrayOfUInt16[59].shortValue()));
+      a(SelectronicEnum.DigitalOutStatus7, (State)new DecimalType(arrayOfUInt16[60].shortValue()));
+      a(SelectronicEnum.DigitalInStatus1, (State)new DecimalType(arrayOfUInt16[61].shortValue()));
+      a(SelectronicEnum.DigitalInStatus2, (State)new DecimalType(arrayOfUInt16[62].shortValue()));
+      a(SelectronicEnum.DigitalInStatus3, (State)new DecimalType(arrayOfUInt16[63].shortValue()));
+      a(SelectronicEnum.DigitalInStatus4, (State)new DecimalType(arrayOfUInt16[64].shortValue()));
+      a(SelectronicEnum.BatteryTemperature, (State)new DecimalType((float)this.g.convertTemperatureValue(arrayOfUInt16[39], this.j)));
+      a(SelectronicEnum.GeneralPurpose1, (State)new DecimalType((arrayOfUInt16[65].shortValue() * this.j.CommonScaleForDcVolts / 327680.0F)));
+      a(SelectronicEnum.GeneralPurpose2, (State)new DecimalType((arrayOfUInt16[66].shortValue() * this.j.CommonScaleForDcVolts / 327680.0F)));
+    }
+    float f2 = this.j.CommonScaleForAcVolts * this.j.CommonScaleForAcCurrent / 2.62144E7F / 1000.0F;
+    float f3 = this.g.convert2UShortsInto1Uint(arrayOfUInt16[67], arrayOfUInt16[68]) * f2;
+    float f4 = arrayOfUInt16[69].shortValue() * f2;
+    a(SelectronicEnum.InverterApparentPower, (State)new DecimalType((float)Math.sqrt((f3 * f3 + f4 * f4))));
+    a(SelectronicEnum.InverterReactivePower, (State)new DecimalType((arrayOfUInt16[69].shortValue() * this.j.CommonScaleForAcVolts * this.j.CommonScaleForAcCurrent / 3276800.0F / 1000.0F)));
+    a(SelectronicEnum.BatteryVolts_InTechTab, (State)new DecimalType((arrayOfUInt16[70].shortValue() * this.j.CommonScaleForDcVolts / 327680.0F)));
+    a(SelectronicEnum.UnitModelNumber, (State)new DecimalType(arrayOfUInt16[72].shortValue()));
+    a(SelectronicEnum.UnitModelRatings, (State)new DecimalType(arrayOfUInt16[75].shortValue()));
+    a(SelectronicEnum.UnitSerialNumber, (State)new DecimalType(this.g.convert2UShortsInto1Uint(arrayOfUInt16[73], arrayOfUInt16[74])));
+    a(SelectronicEnum.UnitRevNumber, (State)new DecimalType(arrayOfUInt16[75].shortValue()));
+    a(SelectronicEnum.UnitModStatus, (State)new DecimalType(arrayOfUInt16[76].shortValue()));
+    a(SelectronicEnum.ControlPCASerialNumber, (State)new DecimalType(this.g.convert2UShortsInto1Uint(arrayOfUInt16[77], arrayOfUInt16[78])));
+    a(SelectronicEnum.ControlPCARevNumber, (State)new DecimalType(arrayOfUInt16[79].shortValue()));
+    a(SelectronicEnum.ControlPCAModStatus, (State)new DecimalType(arrayOfUInt16[80].shortValue()));
+    a(SelectronicEnum.PM1SerialNumber, (State)new DecimalType(this.g.convert2UShortsInto1Uint(arrayOfUInt16[81], arrayOfUInt16[82])));
+    a(SelectronicEnum.PM1RevNumber, (State)new DecimalType(arrayOfUInt16[83].shortValue()));
+    a(SelectronicEnum.PM1ModStatus, (State)new DecimalType(arrayOfUInt16[84].shortValue()));
+    a(SelectronicEnum.PM2SerialNumber, (State)new DecimalType(this.g.convert2UShortsInto1Uint(arrayOfUInt16[85], arrayOfUInt16[86])));
+    a(SelectronicEnum.PM2RevNumber, (State)new DecimalType(arrayOfUInt16[87].shortValue()));
+    a(SelectronicEnum.PM2ModStatus, (State)new DecimalType(arrayOfUInt16[88].shortValue()));
+    a(SelectronicEnum.DaysSinceRecharge, (State)new DecimalType(arrayOfUInt16[90].shortValue()));
+    a(SelectronicEnum.DaystoRecharge, (State)new DecimalType(((arrayOfUInt16[89].intValue() == 65535) ? -1L : arrayOfUInt16[89].intValue())));
+    float f5 = arrayOfUInt16[134].intValue() * this.j.CommonScaleForAcVolts * this.j.CommonScaleForAcCurrent / 3276800.0F;
+    this.L = this.g.convert2UShortsInto1Uint(arrayOfUInt16[126], arrayOfUInt16[127]) * this.j.CommonScaleForAcVolts * this.j.CommonScaleForAcCurrent / 2.62144E7F;
+    this.J = arrayOfUInt16[108].intValue() / 256.0F;
+    this.K = arrayOfUInt16[71].shortValue() * this.j.CommonScaleForDcVolts / 327680.0F;
+    a(SelectronicEnum.ActiveSchedule, (State)new DecimalType(arrayOfUInt16[91].intValue()));
+    a(SelectronicEnum.ChargeStatusNow, (State)new DecimalType(arrayOfUInt16[103].intValue()));
+    a(SelectronicEnum.NowTotalAcPowerSolar, (State)new DecimalType(f5));
+    a(SelectronicEnum.PowerGenerated, (State)new DecimalType(f5));
+    a(SelectronicEnum.NowAcPowerSolar1, (State)new DecimalType((arrayOfUInt16[135].intValue() * this.j.CommonScaleForAcVolts * this.j.CommonScaleForAcCurrent / 3276800.0F)));
+    a(SelectronicEnum.NowAcPowerSolar2, (State)new DecimalType((arrayOfUInt16[136].intValue() * this.j.CommonScaleForAcVolts * this.j.CommonScaleForAcCurrent / 3276800.0F)));
+    a(SelectronicEnum.NowAcPowerSolar3, (State)new DecimalType((arrayOfUInt16[137].intValue() * this.j.CommonScaleForAcVolts * this.j.CommonScaleForAcCurrent / 3276800.0F)));
+    a(SelectronicEnum.NowAcPowerSolar4, (State)new DecimalType((arrayOfUInt16[138].intValue() * this.j.CommonScaleForAcVolts * this.j.CommonScaleForAcCurrent / 3276800.0F)));
+    a(SelectronicEnum.NowAcPowerSolar5, (State)new DecimalType((arrayOfUInt16[139].intValue() * this.j.CommonScaleForAcVolts * this.j.CommonScaleForAcCurrent / 3276800.0F)));
+    a(SelectronicEnum.BattSocPercent, (State)new DecimalType(this.J));
+    a(SelectronicEnum.DCCurrent, (State)new DecimalType((arrayOfUInt16[110].shortValue() * this.j.CommonScaleForDcCurrent / 327680.0F)));
+    a(SelectronicEnum.DCBatteryCurrent, (State)new DecimalType((this.g.convert2UShortsInto1Uint(arrayOfUInt16[111], arrayOfUInt16[112]) * this.j.CommonScaleForDcCurrent / 327680.0F)));
+    a(SelectronicEnum.BatteryVolts, (State)new DecimalType(this.K));
+    a(SelectronicEnum.ACLoadVoltage, (State)new DecimalType((arrayOfUInt16[123].intValue() * this.j.CommonScaleForAcVolts / 327680.0F)));
+    a(SelectronicEnum.LoadAcPower, (State)new DecimalType(this.L));
+    a(SelectronicEnum.PowerUsed, (State)new DecimalType(this.L));
+    a(SelectronicEnum.ACInverterRmsAmps, (State)new DecimalType((arrayOfUInt16[124].shortValue() * this.j.CommonScaleForAcCurrent / 327680.0F)));
+    a(SelectronicEnum.AcCurrent, (State)new DecimalType(Math.abs(arrayOfUInt16[119].shortValue() * this.j.CommonScaleForAcCurrent / 327680.0F)));
+    a(SelectronicEnum.ACGeneratorPower, (State)new DecimalType((-1.0F * arrayOfUInt16[117].shortValue() * this.j.CommonScaleForAcVolts * this.j.CommonScaleForAcCurrent / 3276800.0F)));
+    a(SelectronicEnum.ACGeneratorPower5minAvg, (State)new DecimalType((-1.0F * arrayOfUInt16[118].shortValue() * this.j.CommonScaleForAcVolts * this.j.CommonScaleForAcCurrent / 3276800.0F)));
+    a(SelectronicEnum.ACGeneratorRmsVolts, (State)new DecimalType((arrayOfUInt16[128].shortValue() * this.j.CommonScaleForAcVolts / 327680.0F)));
+    a(SelectronicEnum.ACGeneratorRmsAmps, (State)new DecimalType(Math.abs(arrayOfUInt16[119].shortValue() * this.j.CommonScaleForAcCurrent / 327680.0F)));
+    a(SelectronicEnum.InputACHz, (State)new DecimalType((arrayOfUInt16[120].shortValue() / 100.0F)));
+    a(SelectronicEnum.ApparentPower, (State)new DecimalType((arrayOfUInt16[128].shortValue() * this.j.CommonScaleForAcVolts / 327680.0F * Math.abs(arrayOfUInt16[119].shortValue() * this.j.CommonScaleForAcCurrent / 327680.0F) / 1000.0F)));
+    a(SelectronicEnum.Hz, (State)new DecimalType((arrayOfUInt16[120].shortValue() / 100.0F)));
+    a(SelectronicEnum.NowPercentSolar, (State)new DecimalType(arrayOfUInt16[140].intValue()));
+    a(SelectronicEnum.Shunt1Amps, (State)new DecimalType((g().booleanValue() ? (-1.0F * arrayOfUInt16[113].shortValue() * this.j.CommonScaleForDcCurrent / 327680.0F) : 0.0F)));
+    a(SelectronicEnum.Shunt2Amps, (State)new DecimalType((h().booleanValue() ? (-1.0F * arrayOfUInt16[114].shortValue() * this.j.CommonScaleForDcCurrent / 327680.0F) : 0.0F)));
+    a(SelectronicEnum.Shunt1Power, (State)new DecimalType((g().booleanValue() ? (-1.0F * arrayOfUInt16[115].shortValue() * this.j.CommonScaleForDcVolts * this.j.CommonScaleForDcCurrent / 3276800.0F) : 0.0F)));
+    a(SelectronicEnum.Shunt2Power, (State)new DecimalType((h().booleanValue() ? (-1.0F * arrayOfUInt16[116].shortValue() * this.j.CommonScaleForDcVolts * this.j.CommonScaleForDcCurrent / 3276800.0F) : 0.0F)));
+    float f6 = arrayOfUInt16[176].intValue() * 24.0F * this.j.CommonScaleForAcVolts * this.j.CommonScaleForAcCurrent / 3276800.0F;
+    float f7 = arrayOfUInt16[169].intValue() * 24.0F * this.j.CommonScaleForAcVolts * this.j.CommonScaleForAcCurrent / 3276800.0F / 1000.0F;
+    a(SelectronicEnum.TodayTotalAcEnergySolar, (State)new DecimalType(f6));
+    a(SelectronicEnum.EnergyGenerated, (State)new DecimalType((f6 / 1000.0F)));
+    a(SelectronicEnum.TodayAcEnergySolar1, (State)new DecimalType((arrayOfUInt16[178].intValue() * 24.0F * this.j.CommonScaleForAcVolts * this.j.CommonScaleForAcCurrent / 3276800.0F)));
+    a(SelectronicEnum.TodayAcEnergySolar2, (State)new DecimalType((arrayOfUInt16[179].intValue() * 24.0F * this.j.CommonScaleForAcVolts * this.j.CommonScaleForAcCurrent / 3276800.0F)));
+    a(SelectronicEnum.TodayAcEnergySolar3, (State)new DecimalType((arrayOfUInt16[180].intValue() * 24.0F * this.j.CommonScaleForAcVolts * this.j.CommonScaleForAcCurrent / 3276800.0F)));
+    a(SelectronicEnum.TodayAcEnergySolar4, (State)new DecimalType((arrayOfUInt16[181].intValue() * 24.0F * this.j.CommonScaleForAcVolts * this.j.CommonScaleForAcCurrent / 3276800.0F)));
+    a(SelectronicEnum.TodayAcEnergySolar5, (State)new DecimalType((arrayOfUInt16[182].intValue() * 24.0F * this.j.CommonScaleForAcVolts * this.j.CommonScaleForAcCurrent / 3276800.0F)));
+    a(SelectronicEnum.Shunt1kWhAcc, (State)new DecimalType((g().booleanValue() ? (-1.0F * arrayOfUInt16[165].shortValue() * 24.0F * this.j.CommonScaleForDcVolts * this.j.CommonScaleForDcCurrent / 3276800.0F / 1000.0F) : 0.0F)));
+    a(SelectronicEnum.Shunt2kWhAcc, (State)new DecimalType((h().booleanValue() ? (-1.0F * arrayOfUInt16[166].shortValue() * 24.0F * this.j.CommonScaleForDcVolts * this.j.CommonScaleForDcCurrent / 3276800.0F / 1000.0F) : 0.0F)));
+    a(SelectronicEnum.ACLoadkWhAcc, (State)new DecimalType(f7));
+    a(SelectronicEnum.EnergyUsed, (State)new DecimalType(f7));
+    a(SelectronicEnum.ACInputkWhAcc, (State)new DecimalType((Math.abs(arrayOfUInt16[170].intValue()) * 24.0F * this.j.CommonScaleForAcVolts * this.j.CommonScaleForAcCurrent / 3276800.0F / 1000.0F)));
+    a(SelectronicEnum.AcExportAccumulatedToday, (State)new DecimalType((Math.abs(arrayOfUInt16[173].intValue()) * 24.0F * this.j.CommonScaleForAcVolts * this.j.CommonScaleForAcCurrent / 3276800.0F / 1000.0F)));
+    a(SelectronicEnum.BattInkWhAcc, (State)new DecimalType((this.g.convert2UShortsInto1Uint(arrayOfUInt16[160], arrayOfUInt16[161]) * 24.0F * this.j.CommonScaleForDcVolts * this.j.CommonScaleForDcCurrent / 3276800.0F / 1000.0F)));
+    a(SelectronicEnum.BattOutkWhAcc, (State)new DecimalType((this.g.convert2UShortsInto1Uint(arrayOfUInt16[162], arrayOfUInt16[163]) * 24.0F * this.j.CommonScaleForDcVolts * this.j.CommonScaleForDcCurrent / 3276800.0F / 1000.0F)));
+    this.u = System.currentTimeMillis();
+    a.info(String.format("All %s jobs refreshed, ExecuteTime: %s, QueueTime: %s, WaitTime: %s", new Object[] { this.k, Long.valueOf(this.E), Long.valueOf(this.F), Long.valueOf(this.G) }));
+    this.refreshCounter++;
+    a(SelectronicEnum.RefreshCounter, (State)new DecimalType(this.refreshCounter));
+    if (this.d.getFCASMode() != 1)
+      this.O.storeMetricsForDiagnostic();
+  }
+
+  private void a(SelectronicJob paramSelectronicJob, SelectronicEnum paramSelectronicEnum) {
+    a(paramSelectronicEnum, (State)new StringType(this.g.convertArrayToMyArvioString(paramSelectronicJob.processedResponse, paramSelectronicJob.startAddress, (paramSelectronicJob.getReceived()).length)));
+  }
+
+  private void d(SelectronicJob paramSelectronicJob) {
+    UInt16[] arrayOfUInt161 = paramSelectronicJob.processedResponse;
+    a(paramSelectronicJob, SelectronicEnum.ArrayLed);
+    Boolean bool1 = Boolean.valueOf((arrayOfUInt161[0].shortValue() * this.j.CommonScaleForAcVolts / 327680.0F <= 30.0F));
+    Boolean bool2 = Boolean.valueOf(!((((arrayOfUInt161[60].intValue() == 2) ? 1 : 0) | ((arrayOfUInt161[60].intValue() == 3) ? 1 : 0)) != 0));
+    Boolean bool3 = Boolean.valueOf((arrayOfUInt161[59].shortValue() * this.j.CommonScaleForAcVolts / 327680.0F <= 30.0F));
+    String str = this.h.convertGeneratorStatusValueToString(arrayOfUInt161[19].intValue());
+    a(SelectronicEnum.GeneratorStatus, (State)new StringType(str));
+    a(SelectronicEnum.GeneratorStartReason, (State)new StringType(this.h.convertGeneratorStartedReasonValueToString(arrayOfUInt161[23].intValue())));
+    a(SelectronicEnum.ExportPower, (State)new DecimalType((arrayOfUInt161[18].shortValue() * this.j.CommonScaleForAcVolts * this.j.CommonScaleForAcCurrent / 3276800.0F)));
+    a(SelectronicEnum.ExportkWhAcc, (State)new DecimalType((arrayOfUInt161[22].intValue() * 24.0F * this.j.CommonScaleForAcVolts * this.j.CommonScaleForAcCurrent / 3276800.0F / 1000.0F)));
+    UInt16[] arrayOfUInt162 = new UInt16[31];
+    System.arraycopy(arrayOfUInt161, 28, arrayOfUInt162, 0, 31);
+    c[] arrayOfC = new c[22];
+    a[] arrayOfA = new a[22];
+    a(bool1, b.a.ordinal(), arrayOfC, arrayOfA);
+    a(bool2, b.b.ordinal(), arrayOfC, arrayOfA);
+    a(bool3, b.c.ordinal(), arrayOfC, arrayOfA);
+    a(arrayOfUInt162, 0, 1, b.d.ordinal(), arrayOfC, arrayOfA);
+    a(arrayOfUInt162, 2, 3, b.e.ordinal(), arrayOfC, arrayOfA);
+    a(arrayOfUInt162, 4, 5, b.f.ordinal(), arrayOfC, arrayOfA);
+    a(arrayOfUInt162, 6, 7, b.g.ordinal(), arrayOfC, arrayOfA);
+    a(arrayOfUInt162, 8, 9, b.h.ordinal(), arrayOfC, arrayOfA);
+    a(arrayOfUInt162, 10, 11, b.i.ordinal(), arrayOfC, arrayOfA);
+    a(arrayOfUInt162, 12, 13, b.j.ordinal(), arrayOfC, arrayOfA);
+    a(arrayOfUInt162, 14, b.k.ordinal(), arrayOfC, arrayOfA);
+    a(arrayOfUInt162, 15, b.l.ordinal(), arrayOfC, arrayOfA);
+    a(arrayOfUInt162, 16, b.m.ordinal(), arrayOfC, arrayOfA);
+    a(arrayOfUInt162, 17, b.n.ordinal(), arrayOfC, arrayOfA);
+    a(arrayOfUInt162, 18, b.o.ordinal(), arrayOfC, arrayOfA);
+    a(arrayOfUInt162, 19, b.p.ordinal(), arrayOfC, arrayOfA);
+    a(arrayOfUInt162, 20, b.q.ordinal(), arrayOfC, arrayOfA);
+    a(arrayOfUInt162, 21, 22, b.r.ordinal(), arrayOfC, arrayOfA);
+    a(arrayOfUInt162, 23, 24, b.s.ordinal(), arrayOfC, arrayOfA);
+    a(arrayOfUInt162, 25, 26, b.t.ordinal(), arrayOfC, arrayOfA);
+    a(arrayOfUInt162, 27, 28, b.u.ordinal(), arrayOfC, arrayOfA);
+    a(arrayOfUInt162, 29, 30, b.v.ordinal(), arrayOfC, arrayOfA);
+    a(SelectronicEnum.LedACSource, (State)new StringType(a(arrayOfA, b.a.ordinal())));
+    a(SelectronicEnum.LedTransfer, (State)new StringType(a(arrayOfA, b.b.ordinal())));
+    a(SelectronicEnum.LedACLoad, (State)new StringType(a(arrayOfA, b.c.ordinal())));
+    a(SelectronicEnum.LedBattIndicator1, (State)new StringType(a(arrayOfA, b.d.ordinal())));
+    a(SelectronicEnum.LedBattIndicator2, (State)new StringType(a(arrayOfA, b.e.ordinal())));
+    a(SelectronicEnum.LedBattIndicator3, (State)new StringType(a(arrayOfA, b.f.ordinal())));
+    a(SelectronicEnum.LedBattIndicator4, (State)new StringType(a(arrayOfA, b.g.ordinal())));
+    a(SelectronicEnum.LedBattIndicator5, (State)new StringType(a(arrayOfA, b.h.ordinal())));
+    a(SelectronicEnum.LedBattIndicator6, (State)new StringType(a(arrayOfA, b.i.ordinal())));
+    a(SelectronicEnum.LedBattIndicator7, (State)new StringType(a(arrayOfA, b.j.ordinal())));
+    a(SelectronicEnum.LedAbsorption, (State)new StringType(a(arrayOfA, b.k.ordinal())));
+    a(SelectronicEnum.LedInitial, (State)new StringType(a(arrayOfA, b.l.ordinal())));
+    a(SelectronicEnum.LedEqualize, (State)new StringType(a(arrayOfA, b.m.ordinal())));
+    a(SelectronicEnum.LedFloat, (State)new StringType(a(arrayOfA, b.n.ordinal())));
+    a(SelectronicEnum.LedChrgSourceAC, (State)new StringType(a(arrayOfA, b.o.ordinal())));
+    a(SelectronicEnum.LedChrgSourceRenew, (State)new StringType(a(arrayOfA, b.p.ordinal())));
+    a(SelectronicEnum.LedExport, (State)new StringType(a(arrayOfA, b.q.ordinal())));
+    a(SelectronicEnum.LedGenerator, (State)new StringType(a(arrayOfA, b.r.ordinal())));
+    a(SelectronicEnum.LedOutputMode, (State)new StringType(a(arrayOfA, b.s.ordinal())));
+    a(SelectronicEnum.LedOverTemp, (State)new StringType(a(arrayOfA, b.t.ordinal())));
+    a(SelectronicEnum.LedServiceRequired, (State)new StringType(a(arrayOfA, b.u.ordinal())));
+    a(SelectronicEnum.LedShutDown, (State)new StringType(a(arrayOfA, b.v.ordinal())));
+    if (System.currentTimeMillis() - this.B.longValue() > 15000L) {
+      Boolean bool = Boolean.valueOf(true);
+      if (str.toLowerCase().equals("running")) {
+        bool = Boolean.valueOf(true);
+      } else {
+        bool = Boolean.valueOf(false);
+      }
+      a(SelectronicEnum.GeneratorOn, bool.booleanValue() ? (State)OnOffType.ON : (State)OnOffType.OFF);
+      this.w = bool;
+    }
+    if (System.currentTimeMillis() - this.A.longValue() > 15000L) {
+      Boolean bool = Boolean.valueOf(true);
+      if (a(arrayOfA, b.m.ordinal()).toLowerCase().equals("off")) {
+        bool = Boolean.valueOf(false);
+      } else {
+        bool = Boolean.valueOf(true);
+      }
+      a(SelectronicEnum.EqualiseState, bool.booleanValue() ? (State)OnOffType.ON : (State)OnOffType.OFF);
+      this.x = bool;
+    }
+  }
+
+  private void e(SelectronicJob paramSelectronicJob) {
+    UInt16[] arrayOfUInt16 = paramSelectronicJob.processedResponse;
+    a(paramSelectronicJob, SelectronicEnum.ArrayCommonParameters);
+    a(SelectronicEnum.Schedule1Enabled, (arrayOfUInt16[75].intValue() == 1) ? (State)OnOffType.ON : (State)OnOffType.OFF);
+    a(SelectronicEnum.Schedule2Enabled, (arrayOfUInt16[79].intValue() == 1) ? (State)OnOffType.ON : (State)OnOffType.OFF);
+    a(SelectronicEnum.Schedule3Enabled, (arrayOfUInt16[83].intValue() == 1) ? (State)OnOffType.ON : (State)OnOffType.OFF);
+    a(SelectronicEnum.Schedule4Enabled, (arrayOfUInt16[87].intValue() == 1) ? (State)OnOffType.ON : (State)OnOffType.OFF);
+    a(SelectronicEnum.DigitalControlEnabled, a(arrayOfUInt16) ? (State)OnOffType.ON : (State)OnOffType.OFF);
+  }
+
+  private void f(SelectronicJob paramSelectronicJob) {
+    UInt16[] arrayOfUInt16 = paramSelectronicJob.processedResponse;
+    a(paramSelectronicJob, SelectronicEnum.ArrayDataService);
+    a(SelectronicEnum.ServiceMessages, (State)new StringType(this.h.GetServiceMessages(arrayOfUInt16)));
+    String str = this.h.convertEqualiseValueToString(arrayOfUInt16[21].intValue());
+    a(SelectronicEnum.EqualiseStateMessage, (State)new StringType(str));
+  }
+
+  private void g(SelectronicJob paramSelectronicJob) {
+    UInt16[] arrayOfUInt16 = paramSelectronicJob.processedResponse;
+    a(paramSelectronicJob, SelectronicEnum.ArrayTechnicalData);
+    int i = arrayOfUInt16[0].intValue();
+    a(SelectronicEnum.NumberOfSolarsConnected, (State)new DecimalType(i));
+    if (i > 0) {
+      a(SelectronicEnum.TechDataEnergyTodaySolar1, (State)new DecimalType(a(arrayOfUInt16[1])));
+      a(SelectronicEnum.TechDataAcPowerSolar1, (State)new DecimalType(b(arrayOfUInt16[2])));
+      a(SelectronicEnum.TechDataAcVoltsSolar1, (State)new DecimalType(c(arrayOfUInt16[6])));
+      a(SelectronicEnum.TechDataAcCurrentSolar1, (State)new DecimalType(d(arrayOfUInt16[7])));
+      a(SelectronicEnum.TechDataDcPowerSolar1, (State)new DecimalType(e(arrayOfUInt16[3])));
+      a(SelectronicEnum.TechDataDcVoltsSolar1, (State)new DecimalType(f(arrayOfUInt16[4])));
+      a(SelectronicEnum.TechDataDcCurrentSolar1, (State)new DecimalType(g(arrayOfUInt16[5])));
+      a(SelectronicEnum.TechDataTemperatureSolar1, (State)new StringType(h(arrayOfUInt16[8])));
+      a(SelectronicEnum.TechDataAcPowerPeakSolar1, (State)new DecimalType(i(arrayOfUInt16[10])));
+    }
+    if (i > 1) {
+      a(SelectronicEnum.TechDataEnergyTodaySolar2, (State)new DecimalType(a(arrayOfUInt16[11])));
+      a(SelectronicEnum.TechDataAcPowerSolar2, (State)new DecimalType(b(arrayOfUInt16[12])));
+      a(SelectronicEnum.TechDataAcVoltsSolar2, (State)new DecimalType(c(arrayOfUInt16[16])));
+      a(SelectronicEnum.TechDataAcCurrentSolar2, (State)new DecimalType(d(arrayOfUInt16[17])));
+      a(SelectronicEnum.TechDataDcPowerSolar2, (State)new DecimalType(e(arrayOfUInt16[13])));
+      a(SelectronicEnum.TechDataDcVoltsSolar2, (State)new DecimalType(f(arrayOfUInt16[14])));
+      a(SelectronicEnum.TechDataDcCurrentSolar2, (State)new DecimalType(g(arrayOfUInt16[15])));
+      a(SelectronicEnum.TechDataTemperatureSolar2, (State)new StringType(h(arrayOfUInt16[18])));
+      a(SelectronicEnum.TechDataAcPowerPeakSolar2, (State)new DecimalType(i(arrayOfUInt16[20])));
+    }
+    if (i > 2) {
+      a(SelectronicEnum.TechDataEnergyTodaySolar3, (State)new DecimalType(a(arrayOfUInt16[21])));
+      a(SelectronicEnum.TechDataAcPowerSolar3, (State)new DecimalType(b(arrayOfUInt16[22])));
+      a(SelectronicEnum.TechDataAcVoltsSolar3, (State)new DecimalType(c(arrayOfUInt16[26])));
+      a(SelectronicEnum.TechDataAcCurrentSolar3, (State)new DecimalType(d(arrayOfUInt16[27])));
+      a(SelectronicEnum.TechDataDcPowerSolar3, (State)new DecimalType(e(arrayOfUInt16[23])));
+      a(SelectronicEnum.TechDataDcVoltsSolar3, (State)new DecimalType(f(arrayOfUInt16[24])));
+      a(SelectronicEnum.TechDataDcCurrentSolar3, (State)new DecimalType(g(arrayOfUInt16[25])));
+      a(SelectronicEnum.TechDataTemperatureSolar3, (State)new StringType(h(arrayOfUInt16[28])));
+      a(SelectronicEnum.TechDataAcPowerPeakSolar3, (State)new DecimalType(i(arrayOfUInt16[30])));
+    }
+    if (i > 3) {
+      a(SelectronicEnum.TechDataEnergyTodaySolar4, (State)new DecimalType(a(arrayOfUInt16[31])));
+      a(SelectronicEnum.TechDataAcPowerSolar4, (State)new DecimalType(b(arrayOfUInt16[32])));
+      a(SelectronicEnum.TechDataAcVoltsSolar4, (State)new DecimalType(c(arrayOfUInt16[36])));
+      a(SelectronicEnum.TechDataAcCurrentSolar4, (State)new DecimalType(d(arrayOfUInt16[37])));
+      a(SelectronicEnum.TechDataDcPowerSolar4, (State)new DecimalType(e(arrayOfUInt16[33])));
+      a(SelectronicEnum.TechDataDcVoltsSolar4, (State)new DecimalType(f(arrayOfUInt16[34])));
+      a(SelectronicEnum.TechDataDcCurrentSolar4, (State)new DecimalType(g(arrayOfUInt16[35])));
+      a(SelectronicEnum.TechDataTemperatureSolar4, (State)new StringType(h(arrayOfUInt16[38])));
+      a(SelectronicEnum.TechDataAcPowerPeakSolar4, (State)new DecimalType(i(arrayOfUInt16[40])));
+    }
+    if (i > 4) {
+      a(SelectronicEnum.TechDataEnergyTodaySolar5, (State)new DecimalType(a(arrayOfUInt16[41])));
+      a(SelectronicEnum.TechDataAcPowerSolar5, (State)new DecimalType(b(arrayOfUInt16[42])));
+      a(SelectronicEnum.TechDataAcVoltsSolar5, (State)new DecimalType(c(arrayOfUInt16[46])));
+      a(SelectronicEnum.TechDataAcCurrentSolar5, (State)new DecimalType(d(arrayOfUInt16[47])));
+      a(SelectronicEnum.TechDataDcPowerSolar5, (State)new DecimalType(e(arrayOfUInt16[43])));
+      a(SelectronicEnum.TechDataDcVoltsSolar5, (State)new DecimalType(f(arrayOfUInt16[44])));
+      a(SelectronicEnum.TechDataDcCurrentSolar5, (State)new DecimalType(g(arrayOfUInt16[45])));
+      a(SelectronicEnum.TechDataTemperatureSolar5, (State)new DecimalType(h(arrayOfUInt16[48])));
+      a(SelectronicEnum.TechDataAcPowerPeakSolar5, (State)new DecimalType(i(arrayOfUInt16[50])));
+    }
+  }
+
+  private float a(UInt16 paramUInt16) {
+    return paramUInt16.intValue() * 24.0F * this.j.CommonScaleForAcVolts * this.j.CommonScaleForAcCurrent / 3276800.0F / 1000.0F;
+  }
+
+  private float b(UInt16 paramUInt16) {
+    return Math.abs(paramUInt16.intValue()) * this.j.CommonScaleForAcVolts * this.j.CommonScaleForAcCurrent / 3276800.0F / 1000.0F;
+  }
+
+  private float c(UInt16 paramUInt16) {
+    return paramUInt16.intValue() * this.j.CommonScaleForAcVolts / 327680.0F;
+  }
+
+  private float d(UInt16 paramUInt16) {
+    return Math.abs(paramUInt16.intValue()) * this.j.CommonScaleForAcCurrent / 327680.0F;
+  }
+
+  private float e(UInt16 paramUInt16) {
+    return Math.abs(paramUInt16.intValue()) * this.j.CommonScaleForDcVolts * this.j.CommonScaleForDcCurrent / 3276800.0F / 1000.0F;
+  }
+
+  private float f(UInt16 paramUInt16) {
+    return paramUInt16.intValue() * this.j.CommonScaleForDcVolts / 81920.0F;
+  }
+
+  private float g(UInt16 paramUInt16) {
+    return paramUInt16.intValue() * this.j.CommonScaleForDcCurrent / 327680.0F;
+  }
+
+  private String h(UInt16 paramUInt16) {
+    if (paramUInt16.intValue() == 32767)
+      return "Reading Fault";
+    return String.valueOf(paramUInt16.intValue() * this.j.CommonScaleForTemperature / 32768.0F);
+  }
+
+  private float i(UInt16 paramUInt16) {
+    return paramUInt16.intValue() * this.j.CommonScaleForAcVolts * this.j.CommonScaleForAcCurrent / 3276800.0F / 1000.0F;
+  }
+
+  public void setDefaultInverterSerialNumber(int value) {
+    this.m = value;
+  }
+
+  public int getDefaultSerialNumber() {
+    return this.m;
+  }
+
+  public void setEnabled(Boolean value) {
+    this.r = value;
+  }
+
+  public Boolean getEnabled() {
+    return this.r;
+  }
+
+  public void setDigitalControlInput(int value) {
+    this.n = value;
+  }
+
+  public void setDigitalControlOutput(int value) {
+    this.o = value;
+  }
+
+  public void setDigitalControlState(int value) {
+    this.p = value;
+  }
+
+  public void setSettingsPasscode(int value) {
+    this.q = value;
+  }
+
+  private void a(ConnectorStatusEnum paramConnectorStatusEnum) {
+    if (this.b != paramConnectorStatusEnum) {
+      this.b = paramConnectorStatusEnum;
+      this.d.inverterStatusUpdated();
+    }
+  }
+
+  public String getConnectionStatus() {
+    switch (a()[this.b.ordinal()]) {
+      case 1:
+        return "offline";
+      case 2:
+        return "online";
+    }
+    return "Unknown";
+  }
+
+  public int getSerialNumber() {
+    if (this.j != null)
+      return this.j.serialNumber;
+    return -1;
+  }
+
+  public String getSpproModel() {
+    if (this.j != null)
+      return this.j.SpproModel;
+    return "";
+  }
+
+  public String getSpproPhase() {
+    if (this.j != null)
+      return this.j.SpproPhase;
+    return "";
+  }
+
+  public int getSpproPhaseValue() {
+    if (this.j != null)
+      return this.j.SpproPhaseValue;
+    return -1;
+  }
+
+  public int getGatewayId() {
+    return this.N;
+  }
+
+  public void setMinimumDischargeLevel(float value) {
+    a.info(String.format("setMinimumDischargeLevel with value:%s", new Object[] { Float.valueOf(value) }));
+  }
+
+  public Boolean setGeneratorOn(Boolean value, SelectronicConnectionInfo parSelectronicConnectionInfo, int parGatewayId) {
+    if (this.w.equals(value)) {
+      a.debug(String.format("Same value for GeneratorOn, return without setting GeneratorOn", new Object[0]));
+      return value;
+    }
+    this.w = value;
+    a.info(String.format("setGeneratorOn with value:%s", new Object[] { value }));
+    UInt16[] arrayOfUInt16 = new UInt16[1];
+    if (value.booleanValue()) {
+      arrayOfUInt16[0] = new UInt16(2);
+    } else {
+      arrayOfUInt16[0] = new UInt16(1);
+    }
+    try {
+      this.B = Long.valueOf(System.currentTimeMillis());
+      this.c.writeMultipleRequests(41522, arrayOfUInt16, parSelectronicConnectionInfo, "SetGeneratorOn", 10, parGatewayId);
+      a.info("Result setGeneratorOn");
+      return Boolean.valueOf(true);
+    } catch (Exception exception) {
+      a.error(String.format("ERROR setGeneratorOn with error:%s", new Object[] { exception.getMessage() }));
+      return Boolean.valueOf(false);
+    }
+  }
+
+  public Boolean setEqualiseState(Boolean value, SelectronicConnectionInfo parSelectronicConnectionInfo, int parGatewayId) {
+    if (this.x.equals(value)) {
+      a.info(String.format("Same value for EqualiseState, return without setting EqualiseState", new Object[0]));
+      return value;
+    }
+    this.x = value;
+    a.info(String.format("setEqualiseState with value:%s", new Object[] { value }));
+    UInt16[] arrayOfUInt16 = new UInt16[1];
+    arrayOfUInt16[0] = new UInt16(1);
+    try {
+      this.A = Long.valueOf(System.currentTimeMillis());
+      this.c.writeMultipleRequests(41555, arrayOfUInt16, parSelectronicConnectionInfo, "SetEqualiseState", 10, parGatewayId);
+      a.info("Result setEqualiseState");
+      return Boolean.valueOf(true);
+    } catch (Exception exception) {
+      a.error(String.format("ERROR setEqualiseState with error:%s", new Object[] { exception.getMessage() }));
+      return Boolean.valueOf(false);
+    }
+  }
+
+  public void setScheduleEnabled(int scheduleIndex, Boolean value, SelectronicConnectionInfo parSelectronicConnectionInfo, int parGatewayId) throws SelectronicException {
+    a.info(String.format("setScheduleEnabled '%s' with value:%s", new Object[] { Integer.valueOf(scheduleIndex), value }));
+    a(parSelectronicConnectionInfo, parGatewayId);
+    UInt16[] arrayOfUInt16 = this.c.readMultipleRequests(49152, 196, parSelectronicConnectionInfo, "ScheduleEnabled", 10, parGatewayId);
+    if (value.booleanValue()) {
+      arrayOfUInt16[scheduleIndex] = new UInt16(1);
+    } else {
+      arrayOfUInt16[scheduleIndex] = new UInt16(0);
+    }
+    this.c.writeMultipleRequests(49152, arrayOfUInt16, parSelectronicConnectionInfo, "SetScheduleEnabled", 10, parGatewayId);
+  }
+
+  public void setPriorityEnabled(int parPriorityIndex, Boolean value, SelectronicConnectionInfo parSelectronicConnectionInfo, int parGatewayId) throws SelectronicException {
+    a.info(String.format("setPriorityEnabled '%s' with value:%s", new Object[] { Integer.valueOf(parPriorityIndex), value }));
+    a(parSelectronicConnectionInfo, parGatewayId);
+    UInt16[] arrayOfUInt16 = this.c.readMultipleRequests(51200, 184, parSelectronicConnectionInfo, "PriorityEnabled", 10, parGatewayId);
+    if (value.booleanValue()) {
+      arrayOfUInt16[parPriorityIndex] = new UInt16(1);
+    } else {
+      arrayOfUInt16[parPriorityIndex] = new UInt16(0);
+    }
+    this.c.writeMultipleRequests(51200, arrayOfUInt16, parSelectronicConnectionInfo, "SetPriorityEnabled", 10, parGatewayId);
+  }
+
+  public void setDigitalControlEnabled(Boolean value, SelectronicConnectionInfo parSelectronicConnectionInfo, int parGatewayId) throws SelectronicException {
+    a.info(String.format("setDigitalControlEnabled with value:%s", new Object[] { value }));
+    a(parSelectronicConnectionInfo, parGatewayId);
+    UInt16[] arrayOfUInt16 = this.c.readMultipleRequests(49152, 196, parSelectronicConnectionInfo, "DigitalControlEnabled", 10, parGatewayId);
+    if (value.booleanValue()) {
+      arrayOfUInt16[111] = new UInt16(this.n);
+      arrayOfUInt16[97] = new UInt16(this.o);
+      arrayOfUInt16[110] = new UInt16(this.p);
+    } else {
+      arrayOfUInt16[111] = new UInt16(0);
+      arrayOfUInt16[97] = new UInt16(0);
+      arrayOfUInt16[110] = new UInt16(0);
+    }
+    this.c.writeMultipleRequests(49152, arrayOfUInt16, parSelectronicConnectionInfo, "SetDigitalControlEnabled", 10, parGatewayId);
+  }
+
+  public SelectronicConnection getSelectronicConnection() {
+    return this.c;
+  }
+
+  public int getCnxCountWrongInverter() {
+    return this.l;
+  }
+
+  public List<GatewayIdSelectronicInverter> getGatewayIdSelectronicInverters() {
+    return this.M;
+  }
+
+  private boolean a(UInt16[] paramArrayOfUInt16) {
+    if (paramArrayOfUInt16[97].intValue() != 0 && paramArrayOfUInt16[111].intValue() != 0)
+      return true;
+    return false;
+  }
+
+  private Boolean g() {
+    if (this.j.ExpCardEnabled == 1 &&
+      !this.j.ShuntName1.equals("None") && !this.j.ShuntName1.equals("Error"))
+      return Boolean.valueOf(true);
+    return Boolean.valueOf(false);
+  }
+
+  private Boolean h() {
+    if (this.j.ExpCardEnabled == 1 &&
+      !this.j.ShuntName2.equals("None") && !this.j.ShuntName2.equals("Error"))
+      return Boolean.valueOf(true);
+    return Boolean.valueOf(false);
+  }
+
+  private void i() {
+    (new Thread(this) {
+        public void run() {
+          try {
+            setName("Selectronic Completed Job");
+            SelectronicInverter.b().info(String.format("createSelectronicCompletedJobThread %s", new Object[] { SelectronicInverter.a(this.a) }));
+            while (true) {
+              SelectronicJob selectronicJob = null;
+              try {
+                Util.Sleep(100);
+                if (SelectronicInverter.b(this.a).booleanValue())
+                  for (Map.Entry entry : SelectronicInverter.c(this.a).entrySet()) {
+                    selectronicJob = (SelectronicJob)entry.getValue();
+                    SelectronicInverter.a(this.a, SelectronicInverter.d(this.a) + selectronicJob.executeTime);
+                    SelectronicInverter.b(this.a, SelectronicInverter.e(this.a) + selectronicJob.queueTime);
+                    SelectronicInverter.c(this.a, SelectronicInverter.f(this.a) + selectronicJob.waitTime);
+                    if (selectronicJob.processedResponse == null) {
+                      SelectronicInverter.b().error("selectronicJob.processedResponse is null");
+                      throw new Exception("selectronicJob.processedResponse is null");
+                    }
+                    if (selectronicJob.processedResponse.length == 0) {
+                      SelectronicInverter.b().error("selectronicJob.processedResponse array empty");
+                      throw new Exception("selectronicJob.processedResponse array is empty");
+                    }
+                    if (selectronicJob.startAddress == 41101) {
+                      SelectronicInverter.a(this.a, selectronicJob);
+                    } else if (selectronicJob.startAddress == 41175) {
+                      SelectronicInverter.b(this.a, selectronicJob);
+                    } else if (selectronicJob.startAddress == 49152) {
+                      SelectronicInverter.c(this.a, selectronicJob);
+                    } else if (selectronicJob.startAddress == 41533) {
+                      SelectronicInverter.d(this.a, selectronicJob);
+                    } else if (selectronicJob.startAddress == 41912) {
+                      SelectronicInverter.e(this.a, selectronicJob);
+                    } else if (selectronicJob.startAddress == 40981) {
+                      SelectronicInverter.f(this.a, selectronicJob);
+                    } else if (selectronicJob.startAddress == 51200) {
+                      SelectronicInverter.g(this.a, selectronicJob);
+                    }
+                    SelectronicInverter.c(this.a).remove(selectronicJob.key);
+                    SelectronicInverter.a(this.a, 0);
+                  }
+              } catch (Exception exception) {
+                SelectronicInverter.b().error(String.format("ERROR in %s: inner SelectronicCompletedJobThread, error: %s, errorCount: %s", new Object[] { SelectronicInverter.a(this.a), exception.getMessage(), Integer.valueOf(SelectronicInverter.g(this.a)) }));
+                if (selectronicJob == null) {
+                  SelectronicInverter.b().error(String.format("ERROR in %s: inner SelectronicCompletedJobThread, selectronicJob is not assigned, connection will be disconnected", new Object[] { SelectronicInverter.a(this.a) }));
+                  this.a.disconnect();
+                  continue;
+                }
+                SelectronicInverter.c(this.a).remove(selectronicJob.key);
+                SelectronicInverter.a(this.a, SelectronicInverter.g(this.a) + 1);
+                if (SelectronicInverter.g(this.a) > 3) {
+                  SelectronicInverter.b().error(String.format("ERROR in %s: errorCount: %s", new Object[] { SelectronicInverter.a(this.a), Integer.valueOf(SelectronicInverter.g(this.a)) }));
+                  SelectronicInverter.a(this.a, 0);
+                  this.a.disconnect();
+                }
+              }
+            }
+          } catch (Exception exception) {
+            SelectronicInverter.b().error(String.format("ERRORin %s: global SelectronicCompletedJobThread, error: %s", new Object[] { SelectronicInverter.a(this.a), exception.getMessage() }));
+            return;
+          }
+        }
+      }).start();
+  }
+
+  private void a(SelectronicConnectionInfo paramSelectronicConnectionInfo) throws Exception {
+    a.info(String.format("Determine multi phase support, inverter: %s", new Object[] { this.k }));
+    if (this.j.InverterMemoryMapVersionNumber >= 20 && this.j.InverterCommsCardSoftwareVersion >= 150) {
+      f(paramSelectronicConnectionInfo);
+      if (this.M.size() == 0) {
+        g(paramSelectronicConnectionInfo);
+        f(paramSelectronicConnectionInfo);
+      }
+      if (this.M.size() > 0) {
+        this.d.setMultiPhaseMode(this);
+        b(paramSelectronicConnectionInfo);
+        c(paramSelectronicConnectionInfo);
+        d(paramSelectronicConnectionInfo);
+        e(paramSelectronicConnectionInfo);
+      }
+    } else {
+      a.info(String.format("MultiPhase is NOT supported, InverterMemoryMapVersionNumber: %s, InverterCommsCardSoftwareVersion: %s", new Object[] { Integer.valueOf(this.j.InverterMemoryMapVersionNumber), Integer.valueOf(this.j.InverterCommsCardSoftwareVersion) }));
+    }
+  }
+
+  private void b(SelectronicConnectionInfo paramSelectronicConnectionInfo) {
+    a.info("postMultiPhaseIteration1, assign previousConnectedSerialValue to gatewayId");
+    for (Map.Entry<String, SelectronicInverter> entry : this.d.getListSelectronicInverters().entrySet()) {
+      SelectronicInverter selectronicInverter = (SelectronicInverter)entry.getValue();
+      String str = ArvioConfigurationStore.getItem(String.format(SelectronicBinding.configSerialNumber, new Object[] { selectronicInverter.getName() }));
+      if (str != null && str.length() > 0) {
+        a.info(String.format("postMultiPhaseIteration1, previousConnectedSerialValue %s for Inverter %s", new Object[] { str, selectronicInverter.getName() }));
+        for (GatewayIdSelectronicInverter gatewayIdSelectronicInverter : this.M) {
+          if (gatewayIdSelectronicInverter.SelectronicInverter == null) {
+            a.info(String.format("postMultiPhaseIteration1, serialNumber: %s, gatewayId: %s", new Object[] { Integer.valueOf(gatewayIdSelectronicInverter.SerialNumber), Integer.valueOf(gatewayIdSelectronicInverter.GatewayId) }));
+            if (Integer.toString(gatewayIdSelectronicInverter.SerialNumber).equalsIgnoreCase(str)) {
+              selectronicInverter.b(gatewayIdSelectronicInverter.GatewayId);
+              gatewayIdSelectronicInverter.SelectronicInverter = selectronicInverter;
+              a.info(String.format("postMultiPhaseIteration1, Found gatewayId %s, getwaykey: %s, getwayValue: %s", new Object[] { Integer.valueOf(gatewayIdSelectronicInverter.GatewayId), Integer.valueOf(gatewayIdSelectronicInverter.SerialNumber), selectronicInverter.getName() }));
+            }
+          }
+        }
+        continue;
+      }
+      a.info(String.format("postMultiPhase, previousConnectedSerialValue is empty for: %s", new Object[] { selectronicInverter.getName() }));
+    }
+  }
+
+  private void c(SelectronicConnectionInfo paramSelectronicConnectionInfo) {
+    a.info("postMultiPhaseIteration2, assign gatewayId to inverter");
+    for (GatewayIdSelectronicInverter gatewayIdSelectronicInverter : this.M) {
+      if (gatewayIdSelectronicInverter.SelectronicInverter == null) {
+        Iterator<Map.Entry> iterator = this.d.getListSelectronicInverters().entrySet().iterator();
+        while (iterator.hasNext() && gatewayIdSelectronicInverter.SelectronicInverter == null) {
+          Map.Entry entry = iterator.next();
+          SelectronicInverter selectronicInverter = (SelectronicInverter)entry.getValue();
+          if (selectronicInverter.N == -1) {
+            selectronicInverter.b(gatewayIdSelectronicInverter.GatewayId);
+            gatewayIdSelectronicInverter.SelectronicInverter = selectronicInverter;
+            a.info(String.format("postMultiPhaseIteration2, inverter: %s assigned to gatewayId: %s, with serial no: %s", new Object[] { selectronicInverter.k,
+                    Integer.valueOf(selectronicInverter.getGatewayId()),
+                    Integer.valueOf(gatewayIdSelectronicInverter.SerialNumber) }));
+          }
+        }
+      }
+    }
+  }
+
+  private void d(SelectronicConnectionInfo paramSelectronicConnectionInfo) throws Exception {
+    a.info("postMultiPhaseIteration3, ensure all gateway entries are assigned to inverter");
+    for (GatewayIdSelectronicInverter gatewayIdSelectronicInverter : this.M) {
+      if (gatewayIdSelectronicInverter.SelectronicInverter != null) {
+        if (gatewayIdSelectronicInverter.SelectronicInverter.getGatewayId() != 0) {
+          a.info(String.format("postMultiPhaseIteration3, retrieveSelectronicConfig: %s, gatewayId: %s", new Object[] { Integer.valueOf(gatewayIdSelectronicInverter.SerialNumber), Integer.valueOf(gatewayIdSelectronicInverter.SelectronicInverter.getGatewayId()) }));
+          retrieveSelectronicConfig(paramSelectronicConnectionInfo, gatewayIdSelectronicInverter.SelectronicInverter.getGatewayId(), gatewayIdSelectronicInverter.SelectronicInverter);
+        }
+        if (gatewayIdSelectronicInverter.SelectronicInverter.getSerialNumber() != gatewayIdSelectronicInverter.SerialNumber) {
+          String str1 = String.format("ERROR, serialNumber from multiPhase %s is different from quering the inverter %s", new Object[] { Integer.valueOf(gatewayIdSelectronicInverter.SerialNumber), Integer.valueOf(gatewayIdSelectronicInverter.SelectronicInverter.getSerialNumber()) });
+          a.error(str1);
+          throw new Exception(str1);
+        }
+        continue;
+      }
+      String str = String.format("serialNumber %s is not assigned with inverter, connection will be disconnected", new Object[] { Integer.valueOf(gatewayIdSelectronicInverter.SerialNumber) });
+      a.error(str);
+      throw new Exception(str);
+    }
+  }
+
+  private void e(SelectronicConnectionInfo paramSelectronicConnectionInfo) throws Exception {
+    a.info("postMultiPhaseIteration4, configuration store contains serial number for Inverter");
+    for (GatewayIdSelectronicInverter gatewayIdSelectronicInverter : this.M) {
+      if (gatewayIdSelectronicInverter.SelectronicInverter != null) {
+        String str1 = String.format(SelectronicBinding.configSerialNumber, new Object[] { gatewayIdSelectronicInverter.SelectronicInverter.getName() });
+        String str2 = ArvioConfigurationStore.getItem(str1);
+        if (str2 == null || !str2.equalsIgnoreCase(Integer.toString(gatewayIdSelectronicInverter.SelectronicInverter.getSerialNumber()))) {
+          ArvioConfigurationStore.saveItem(str1, Integer.toString(gatewayIdSelectronicInverter.SelectronicInverter.getSerialNumber()));
+          a.info(String.format("Store configurationitem, itemName: %s, itemValue: %s", new Object[] { str1, Integer.toString(gatewayIdSelectronicInverter.SelectronicInverter.getSerialNumber()) }));
+        }
+        continue;
+      }
+      String str = String.format("SelectronicInverter is not assigned for %s, connection will be disconnected", new Object[] { Integer.valueOf(gatewayIdSelectronicInverter.SerialNumber) });
+      a.error(str);
+      throw new Exception(str);
+    }
+  }
+
+  private void b(int paramInt) {
+    this.N = paramInt;
+  }
+
+  private void j() {
+    a.info(String.format("resetMultiPhaseProp, inverter: %s", new Object[] { this.k }));
+    this.M.clear();
+    for (Map.Entry<String, SelectronicInverter> entry : this.d.getListSelectronicInverters().entrySet()) {
+      SelectronicInverter selectronicInverter = (SelectronicInverter)entry.getValue();
+      selectronicInverter.N = -1;
+    }
+  }
+
+  private void f(SelectronicConnectionInfo paramSelectronicConnectionInfo) throws Exception {
+    j();
+    a.info(String.format("retrieveGatewayIdSelectronicInverters, inverter: %s", new Object[] { this.k }));
+    UInt16[] arrayOfUInt16 = this.c.readMultipleRequests(57168, 127, paramSelectronicConnectionInfo, "RetrieveGatewaySerialList", 10, 0);
+    for (byte b = 0; b < arrayOfUInt16.length / 2; b++) {
+      int i = (arrayOfUInt16[b * 2 + 1].intValue() << 16) + arrayOfUInt16[b * 2].intValue();
+      if (i > 0) {
+        SelectronicInverter selectronicInverter = null;
+        if (getSerialNumber() == i) {
+          selectronicInverter = this;
+          selectronicInverter.b(b);
+        }
+        GatewayIdSelectronicInverter gatewayIdSelectronicInverter = new GatewayIdSelectronicInverter(b, i);
+        gatewayIdSelectronicInverter.SelectronicInverter = selectronicInverter;
+        this.M.add(gatewayIdSelectronicInverter);
+        a.info(String.format("listGatewayIdSelectronicInverters[%s]:%s, inverter: %s", new Object[] { Integer.valueOf(gatewayIdSelectronicInverter.GatewayId), Integer.valueOf(i), (gatewayIdSelectronicInverter.SelectronicInverter == null) ? "NULL" : gatewayIdSelectronicInverter.SelectronicInverter.getName() }));
+      }
+    }
+    for (GatewayIdSelectronicInverter gatewayIdSelectronicInverter : this.M) {
+      a.info(String.format("GatewayIdSelectronicInverter: %s", new Object[] { gatewayIdSelectronicInverter.toString() }));
+    }
+    if (this.M.size() > this.d.getListSelectronicInverters().size()) {
+      String str = String.format("Detected inverters exceeds supported inverters for AutomatorId:%s", new Object[] { Automator.getAutomatorId() });
+      StringBuilder stringBuilder = new StringBuilder();
+      stringBuilder.append(str);
+      stringBuilder.append(String.format("<br>E-Maxx Id:" + Automator.getAutomatorId(), new Object[0]));
+      stringBuilder.append(String.format("<br>Supported inverters: %s", new Object[] { Integer.valueOf(this.d.getListSelectronicInverters().size()) }));
+      stringBuilder.append(String.format("<br>Detected inverters: %s", new Object[] { Integer.valueOf(this.M.size()) }));
+      for (GatewayIdSelectronicInverter gatewayIdSelectronicInverter : this.M) {
+        stringBuilder.append(String.format("<br>Serial no: %s, GatewayId: %s", new Object[] { Integer.valueOf(gatewayIdSelectronicInverter.SerialNumber), Integer.valueOf(gatewayIdSelectronicInverter.GatewayId) }));
+      }
+      if (ArvioConfigurationStore.getItem("DetectedInvertersExceedsSupportedInverters") == null) {
+        Notify.notifyMyArvio(str, stringBuilder.toString(), "Support@arvio.com.au", null);
+        ArvioConfigurationStore.saveItem("DetectedInvertersExceedsSupportedInverters", Long.toString(Calendar.getInstance().getTimeInMillis()));
+      } else {
+        a.error(String.format("Support@arvio.com.au already informed about %s", new Object[] { str }));
+      }
+      a.error("FATAL ERROR: " + stringBuilder.toString());
+      throw new Exception(str);
+    }
+  }
+
+  private void g(SelectronicConnectionInfo paramSelectronicConnectionInfo) {
+    a.info(String.format("rebuildMultiPhaseSerialList, inverter: %s", new Object[] { this.k }));
+    UInt16[] arrayOfUInt16 = new UInt16[1];
+    arrayOfUInt16[0] = new UInt16(1);
+    this.c.writeMultipleRequests(57311, arrayOfUInt16, paramSelectronicConnectionInfo, "RebuildMultiPhaseSerialList", 10, 0);
+  }
+
+  private void a(String paramString, State paramState) {
+    PersistenceService3 persistenceService3 = this.d.getPersistenceService3();
+    if (persistenceService3 != null &&
+      persistenceService3 instanceof PersistenceService5) {
+      PersistenceService5 persistenceService5 = (PersistenceService5)persistenceService3;
+      persistenceService5.storeItemInMemoryCache(paramString, paramState);
+    }
+  }
+}

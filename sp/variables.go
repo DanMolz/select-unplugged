@@ -2,19 +2,6 @@ package sp
 
 type SpUint16 = uint16
 
-// TODO: construct variables in a function and inject them
-
-// uint, ac_w, 41107
-// var LoadAcPower variable = variableUint32{variable: {Address: AreaAddress{41107}}}
-//var LoadAcPower = NewVariableFloat64(41107, 2, ConvertUnsignedAcW)
-
-// ushort, percent, 41089
-// var BatterySoc variable = new(41089)
-//var BatterySoc = NewVariableFloat64(41089, 1, ConvertRatio)
-
-// short, Shunt1Name, 49417
-//var Shunt1Name = newVariableString(49417, 1, ConvertShunt)
-
 // Read to commence login challenge, written with md5 of read challenge + password
 var VarLoginHash = NewVariable(NewArea(2031616, 8))
 
@@ -30,36 +17,88 @@ var VarBatteryEnergyInToday = NewVariable(NewArea(41135, 2))
 // uint, how much energy has gone in to the battery total
 var VarBatteryEnergyInTotal = NewVariable(NewArea(41354, 2))
 
-// ushort, percent, battery state of charge
-var VarBatterySoc = NewVariable(NewArea(41089, 1))
+// ArrayTechnicalDataTab
+var ArrayTechnicalDataTab Address = 40981
 
-// ushort
-var VarCommonScaleForAcVolts = NewVariable(NewArea(41000, 1))
-var VarCommonScaleForAcCurrent = NewVariable(NewArea(41001, 1))
-var VarCommonScaleForDcVolts = NewVariable(NewArea(41002, 1))
-var VarCommonScaleForDcCurrent = NewVariable(NewArea(41003, 1))
-var VarCommonScaleForTemperature = NewVariable(NewArea(41004, 1))
-var VarCommonScaleForInternalVoltages = NewVariable(NewArea(41005, 1))
+var VarCommonScaleForAcVolts = NewVariable(NewArea(ArrayTechnicalDataTab+19, 1))
+var VarCommonScaleForAcCurrent = NewVariable(NewArea(ArrayTechnicalDataTab+20, 1))
+var VarCommonScaleForDcVolts = NewVariable(NewArea(ArrayTechnicalDataTab+21, 1))
+var VarCommonScaleForDcCurrent = NewVariable(NewArea(ArrayTechnicalDataTab+22, 1))
+var VarCommonScaleForTemperature = NewVariable(NewArea(ArrayTechnicalDataTab+23, 1))
+var VarCommonScaleForInternalVoltages = NewVariable(NewArea(ArrayTechnicalDataTab+24, 1))
 
-// TESTING
-var VarACLoadkWhTotalAcc = NewVariable(NewArea(41519, 2)) // uint
-var VarLoadAcPower = NewVariable(NewArea(41107, 2)) //uint
-var VarLoadAcPower1 = NewVariable(NewArea(41107, 1)) //ushort
-var VarLoadAcPower2 = NewVariable(NewArea(41108, 1)) //ushort
+var VarDCVolts = NewVariable(NewArea(ArrayTechnicalDataTab+25, 1)) //shortValue
 
-// 40981, 182, parSelectronicConnectionInfo, "TechnicalDataTab"
-var VarDCVolts = NewVariable(NewArea(41006, 1))
-var VarDCBatteryPower1 = NewVariable(NewArea(41007, 1))
-var VarDCBatteryPower2 = NewVariable(NewArea(41008, 1))
-var VarVersionNumber = NewVariable(NewArea(41010, 1))
-var VarGridSoftwareVersion = NewVariable(NewArea(41014, 1))
-// var VarBuildDate = NewVariable(NewArea(41011, 2))
+var VarDCBatteryPower1 = NewVariable(NewArea(ArrayTechnicalDataTab+26, 1)) //shortValue
+var VarDCBatteryPower2 = NewVariable(NewArea(ArrayTechnicalDataTab+27, 1)) //shortValue
 
-var VarChargeStatus = NewVariable(NewArea(41029, 2))
+var VarVersionNumber = NewVariable(NewArea(ArrayTechnicalDataTab+29, 1)) //shortValue
+var VarGridSoftwareVersion = NewVariable(NewArea(ArrayTechnicalDataTab+33, 1)) //shortValue
 
-var VarInverterRunHrsTotalAcc1 = NewVariable(NewArea(41023, 1))
-var VarInverterRunHrsTotalAcc2 = NewVariable(NewArea(41024, 1))
+var VarInverterRunHrsTotalAcc1 = NewVariable(NewArea(ArrayTechnicalDataTab+42, 1)) //shortValue
+var VarInverterRunHrsTotalAcc2 = NewVariable(NewArea(ArrayTechnicalDataTab+43, 1)) //shortValue
 
+var VarChargeStatus = NewVariable(NewArea(ArrayTechnicalDataTab+48, 2)) //intValue
+
+var VarDaysSinceEqualise = NewVariable(NewArea(ArrayTechnicalDataTab+50, 1)) //shortValue
+
+var VarUnitSerialNumber1 = NewVariable(NewArea(ArrayTechnicalDataTab+77, 1)) //shortValue
+var VarUnitSerialNumber2 = NewVariable(NewArea(ArrayTechnicalDataTab+78, 1)) //shortValue
+
+var VarNowTotalAcPowerSolar = NewVariable(NewArea(ArrayTechnicalDataTab+134, 2)) //intValue
+
+var VarNowAcPowerSolar1 = NewVariable(NewArea(ArrayTechnicalDataTab+135, 2)) //intValue
+var VarNowAcPowerSolar2 = NewVariable(NewArea(ArrayTechnicalDataTab+136, 2)) //intValue
+var VarNowAcPowerSolar3 = NewVariable(NewArea(ArrayTechnicalDataTab+137, 2)) //intValue
+var VarNowAcPowerSolar4 = NewVariable(NewArea(ArrayTechnicalDataTab+138, 2)) //intValue
+var VarNowAcPowerSolar5 = NewVariable(NewArea(ArrayTechnicalDataTab+139, 2)) //intValue
+
+var VarBattSocPercent = NewVariable(NewArea(ArrayTechnicalDataTab+108, 2)) //intValue
+
+var VarDCCurrent = NewVariable(NewArea(ArrayTechnicalDataTab+110, 1)) //shortValue
+
+var VarDCBatteryCurrent1 = NewVariable(NewArea(ArrayTechnicalDataTab+111, 1)) //shortValue
+var VarDCBatteryCurrent2 = NewVariable(NewArea(ArrayTechnicalDataTab+112, 1)) //shortValue
+
+var VarBatteryVolts = NewVariable(NewArea(ArrayTechnicalDataTab+71, 1)) //shortValue
+
+var VarACLoadVoltage = NewVariable(NewArea(ArrayTechnicalDataTab+123, 2)) //intValue
+
+var VarLoadAcPower1 = NewVariable(NewArea(ArrayTechnicalDataTab+126, 1)) //shortValue
+var VarLoadAcPower2 = NewVariable(NewArea(ArrayTechnicalDataTab+127, 1)) //shortValue
+
+var VarACInverterRmsAmps = NewVariable(NewArea(ArrayTechnicalDataTab+124, 1)) //shortValue
+var VarAcCurrent = NewVariable(NewArea(ArrayTechnicalDataTab+119, 1)) //shortValue
+var VarACGeneratorPower = NewVariable(NewArea(ArrayTechnicalDataTab+117, 1)) //shortValue
+var VarACGeneratorPower5minAvg = NewVariable(NewArea(ArrayTechnicalDataTab+118, 1)) //shortValue
+var VarACGeneratorRmsVolts = NewVariable(NewArea(ArrayTechnicalDataTab+128, 1)) //shortValue
+var VarACGeneratorRmsAmps = NewVariable(NewArea(ArrayTechnicalDataTab+119, 1)) //shortValue
+
+var VarNowPercentSolar = NewVariable(NewArea(ArrayTechnicalDataTab+140, 2)) //intValue
+
+var VarShunt1Power = NewVariable(NewArea(ArrayTechnicalDataTab+115, 1)) //shortValue
+var VarShunt2Power = NewVariable(NewArea(ArrayTechnicalDataTab+116, 1)) //shortValue
+
+var VarTodayTotalAcEnergySolar = NewVariable(NewArea(ArrayTechnicalDataTab+176, 2)) //intValue
+
+var VarEnergyGenerated = NewVariable(NewArea(ArrayTechnicalDataTab+176, 2)) //intValue
+
+var VarTodayAcEnergySolar1 = NewVariable(NewArea(ArrayTechnicalDataTab+178, 2)) //intValue
+var VarTodayAcEnergySolar2 = NewVariable(NewArea(ArrayTechnicalDataTab+179, 2)) //intValue
+var VarTodayAcEnergySolar3 = NewVariable(NewArea(ArrayTechnicalDataTab+180, 2)) //intValue
+var VarTodayAcEnergySolar4 = NewVariable(NewArea(ArrayTechnicalDataTab+181, 2)) //intValue
+var VarTodayAcEnergySolar5 = NewVariable(NewArea(ArrayTechnicalDataTab+182, 2)) //intValue
+
+var VarShunt1kWhAcc = NewVariable(NewArea(ArrayTechnicalDataTab+165, 1)) //shortValue
+var VarShunt2kWhAcc = NewVariable(NewArea(ArrayTechnicalDataTab+166, 1)) //shortValue
+
+var VarEnergyUsed = NewVariable(NewArea(ArrayTechnicalDataTab+169, 2)) //intValue
+
+var VarBattInkWhAcc1 = NewVariable(NewArea(ArrayTechnicalDataTab+160, 1)) //shortValue
+var VarBattInkWhAcc2 = NewVariable(NewArea(ArrayTechnicalDataTab+161, 1)) //shortValue
+
+var VarBattOutkWhAcc1 = NewVariable(NewArea(ArrayTechnicalDataTab+162, 1)) //shortValue
+var VarBattOutkWhAcc2 = NewVariable(NewArea(ArrayTechnicalDataTab+163, 1)) //shortValue
 
 /*
 TYPES = {
