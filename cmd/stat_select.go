@@ -29,7 +29,7 @@ var statSelectCmd = &cobra.Command{
 
 		// Run StatsSelectLiveRenderV2 every 30 seconds in a goroutine
 		go func() {
-			ticker := time.NewTicker(15 * time.Second)
+			ticker := time.NewTicker(30 * time.Second)
 			defer ticker.Stop()
 
 			for {
