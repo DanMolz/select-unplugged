@@ -21,7 +21,7 @@ var statSelectCmd = &cobra.Command{
 		}
 
 		// Initial execution of StatsSelectLiveRenderV2
-		sp.StatsSelectLiveRenderV2(protocol)
+		sp.StatsSelectLiveRender(protocol)
 
 		// Create a channel to wait indefinitely
 		done := make(chan struct{})
@@ -35,7 +35,7 @@ var statSelectCmd = &cobra.Command{
 			for {
 				select {
 				case <-ticker.C:
-					sp.StatsSelectLiveRenderV2(protocol)
+					sp.StatsSelectLiveRender(protocol)
 				case <-done:
 					return
 				}
