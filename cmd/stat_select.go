@@ -1,11 +1,12 @@
 package cmd
 
 import (
+	"time"
+
 	"github.com/neerolyte/select-unplugged/sp"
 	"github.com/spf13/cobra"
 )
 
-// var statSelectPassword string
 var statSelectCmd = &cobra.Command{
 	Use:   "stat-select",
 	Short: "select.live device emulation CLI",
@@ -19,8 +20,30 @@ var statSelectCmd = &cobra.Command{
 			panic(err)
 		}
 
-		//fmt.Print(sp.StatsSelectLiveRenderV2(protocol))
+		// Initial execution of StatsSelectLiveRenderV2
 		sp.StatsSelectLiveRenderV2(protocol)
+
+		// Create a channel to wait indefinitely
+		done := make(chan struct{})
+		defer close(done)
+
+		// Run StatsSelectLiveRenderV2 every 30 seconds in a goroutine
+		go func() {
+			ticker := time.NewTicker(15 * time.Second)
+			defer ticker.Stop()
+
+			for {
+				select {
+				case <-ticker.C:
+					sp.StatsSelectLiveRenderV2(protocol)
+				case <-done:
+					return
+				}
+			}
+		}()
+
+		// Wait indefinitely
+		<-done
 	},
 }
 
